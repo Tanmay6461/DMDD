@@ -1,4 +1,4 @@
-DROP USER IF EXIST OMS CASCADE;
+DROP USER OMS CASCADE;
 CREATE USER OMS IDENTIFIED BY "Dmddproject@2025";
 ALTER USER OMS DEFAULT TABLESPACE users QUOTA UNLIMITED ON users;
 ALTER USER OMS TEMPORARY TABLESPACE TEMP;
@@ -6,3 +6,146 @@ GRANT CONNECT TO OMS;
 GRANT CREATE SESSION, CREATE VIEW, CREATE TABLE, ALTER SESSION, CREATE SEQUENCE TO
 OMS;
 GRANT CREATE SYNONYM, CREATE DATABASE LINK, RESOURCE, UNLIMITED TABLESPACE TO OMS;
+
+
+-- Patient Details
+CREATE TABLE IF NOT EXISTS Patient_Records (
+
+    patient_id VARCHAR2(50) PRIMARY KEY,
+    first_name VARCHAR2(50) NOT NULL,
+    last_name VARCHAR2(50) NOT NULL,
+    doctor_id VARCHAR2(50) NOT NULL,
+    CONSTRAINT fk_patient_doctor FOREIGN KEY (doctor_id) REFERENCES Doctor_Details (doctor_id)
+);
+
+-- doctor details
+CREATE TABLE IF NOT EXISTS Doctor_Details (
+    doctor_id VARCHAR2(50) PRIMARY KEY,
+    first_name VARCHAR2(50) NOT NULL,
+    last_name VARCHAR2(50) NOT NULL,
+    specialization VARCHAR2(50)
+);
+
+-- Patient address
+CREATE TABLE IF NOT EXISTS Patient_Address (
+    address_id VARCHAR2(50) PRIMARY KEY,
+    street_name VARCHAR2(100),
+    city VARCHAR2(50),
+    state VARCHAR2(50),
+    patient_id VARCHAR2(50) NOT NULL,
+    CONSTRAINT fk_patient_address FOREIGN KEY (patient_id) REFERENCES Patient_Records (patient_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS Medication_Information (
+    prescription_id VARCHAR2(50) PRIMARY KEY,
+    medicine_name VARCHAR2(100),
+    medicine_composition VARCHAR2(150),
+    date_administered DATE NOT NULL,
+    patient_id VARCHAR2(50) NOT NULL,
+    nurse_id VARCHAR2(50),
+    CONSTRAINT fk_medication_patient FOREIGN KEY (patient_id) REFERENCES Patient_Records (patient_id)
+);
+
+
+
+CREATE TABLE IF NOT EXISTS Diagnostic_Test (
+    diagnostic_id VARCHAR2(50) PRIMARY KEY,
+    test_name VARCHAR2(50),
+    test_charge FLOAT CHECK(test_charge > 0)
+);
+
+
+CREATE TABLE IF NOT EXISTS Prescribed_Diagnostics (
+    diagnostic_test_id VARCHAR2(50),
+    date_administered DATE NOT NULL,
+    test_result VARCHAR2(100),
+    nurse_id VARCHAR2(50),
+    patient_id VARCHAR2(50),
+    PRIMARY KEY (diagnostic_test_id, patient_id),
+    CONSTRAINT fk_prescribed_diagnostics_patient FOREIGN KEY (patient_id) REFERENCES Patient_Records (patient_id),
+    CONSTRAINT fk_prescribed_diagnostics_test FOREIGN KEY (diagnostic_test_id) REFERENCES Diagnostic_Test (diagnostic_id)
+);
+
+-- View's
+
+-- 1. View: Current Patient Status
+CREATE VIEW IF NOT EXISTS Current_Patient_Details AS
+SELECT 
+    p.patient_id,
+    p.first_name || ' ' || p.last_name AS patient_name,
+    d.first_name || ' ' || d.last_name AS doctor_name,
+    d.specialization AS doctor_specialization,
+    a.street_name || ', ' || a.city || ', ' || a.state AS address
+FROM 
+    Patient_Records p
+JOIN 
+    Doctor_Details d ON p.doctor_id = d.doctor_id
+LEFT JOIN 
+    Patient_Address a ON p.patient_id = a.patient_id;
+
+
+--2. View: Medication Administered
+CREATE VIEW IF NOT EXISTS Diagnostic_Tests_Prescribed AS
+SELECT 
+    pd.diagnostic_test_id,
+    dt.test_name,
+    dt.test_charge,
+    pd.date_administered,
+    pd.test_result,
+    p.first_name || ' ' || p.last_name AS patient_name
+FROM 
+    Prescribed_Diagnostics pd
+JOIN 
+    Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
+JOIN 
+    Patient_Records p ON pd.patient_id = p.patient_id;
+
+
+--3. 
+CREATE VIEW IF NOT EXISTS Total_Diagnostic_Charges_Per_Patient AS
+SELECT 
+    p.patient_id,
+    p.first_name || ' ' || p.last_name AS patient_name,
+    SUM(dt.test_charge) AS total_charges
+FROM 
+    Prescribed_Diagnostics pd
+JOIN 
+    Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
+JOIN 
+    Patient_Records p ON pd.patient_id = p.patient_id
+GROUP BY 
+    p.patient_id, p.first_name, p.last_name;
+
+
+INSERT INTO Doctor_Details (doctor_id, first_name, last_name, specialization) VALUES 
+('D001', 'John', 'Doe', 'Cardiology'),
+('D002', 'Jane', 'Smith', 'Neurology'),
+('D003', 'Emily', 'Clark', 'Pediatrics'),
+('D004', 'Michael', 'Brown', 'Orthopedics'),
+('D005', 'Sarah', 'Johnson', 'Dermatology');
+
+
+
+INSERT INTO Patient_Records (patient_id, first_name, last_name, doctor_id) VALUES 
+('P001', 'Alice', 'Green', 'D001'),
+('P002', 'Bob', 'White', 'D002'),
+('P003', 'Charlie', 'Black', 'D003'),
+('P004', 'Diana', 'Blue', 'D004'),
+('P005', 'Eve', 'Gray', 'D005');
+
+
+INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) VALUES 
+('A001', '123 Main St.', 'Boston', 'MA', 'P001'),
+('A002', '456 Elm St.', 'Cambridge', 'MA', 'P002'),
+('A003', '789 Oak St.', 'Springfield', 'IL', 'P003'),
+('A004', '321 Maple St.', 'Chicago', 'IL', 'P004'),
+('A005', '654 Pine St.', 'New York City', 'NY', 'P005');
+
+INSERT INTO Medication_Information (prescription_id, medicine_name, medicine_composition, date_administered, patient_id) VALUES 
+('M001', 'Paracetamol 500mg Tablet', 'Paracetamol 500mg per tablet.', TO_DATE('2025-03-20','YYYY-MM-DD'), 'P001'),
+('M002', 'Ibuprofen 200mg Tablet',  'Ibuprofen 200mg per tablet.', TO_DATE('2025-03-21','YYYY-MM-DD'),  'P002'),
+('M003', 'Amoxicillin 250mg Capsule','Amoxicillin 250mg per capsule.',TO_DATE('2025-03-22','YYYY-MM-DD'),  'P004')
+
+
+

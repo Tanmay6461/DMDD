@@ -8,6 +8,14 @@ CREATE TABLE Patient_Records (
     doctor_id VARCHAR2(50) NOT NULL,
     CONSTRAINT fk_patient_doctor FOREIGN KEY (doctor_id) REFERENCES Doctor_Details (doctor_id));
     
+ 
+ 
+CREATE TABLE IF NOT EXISTS Diagnostic_Test (
+    diagnostic_id VARCHAR2(50) PRIMARY KEY,
+    test_name VARCHAR2(50),
+    test_charge FLOAT CHECK(test_charge > 0)
+);
+ 
     
 CREATE TABLE Medication_Information (
     prescription_id VARCHAR2(50) PRIMARY KEY,

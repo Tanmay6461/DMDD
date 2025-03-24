@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 
 
 -- Patient Details
@@ -75,4 +74,3 @@ JOIN
     Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
 JOIN 
     Patient_Records p ON pd.patient_id = p.patient_id;
->>>>>>> c23ace8b71cf085db0438768a3bbe4a798469929

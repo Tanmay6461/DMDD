@@ -32,3 +32,10 @@ JOIN
     Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
 JOIN 
     Patient_Records p ON pd.patient_id = p.patient_id;
+    
+INSERT INTO Patient_Records (patient_id, first_name, last_name, doctor_id) VALUES 
+('P001', 'Alice', 'Green', 'D001'),
+('P002', 'Bob', 'White', 'D002'),
+('P003', 'Charlie', 'Black', 'D003'),
+('P004', 'Diana', 'Blue', 'D004'),
+('P005', 'Eve', 'Gray', 'D005');

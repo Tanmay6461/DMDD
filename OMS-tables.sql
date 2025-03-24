@@ -107,3 +107,11 @@ JOIN
 GROUP BY 
     p.patient_id, p.first_name, p.last_name;
 
+
+
+INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) VALUES 
+('A001', '123 Main St.', 'Boston', 'MA', 'P001'),
+('A002', '456 Elm St.', 'Cambridge', 'MA', 'P002'),
+('A003', '789 Oak St.', 'Springfield', 'IL', 'P003'),
+('A004', '321 Maple St.', 'Chicago', 'IL', 'P004'),
+('A005', '654 Pine St.', 'New York City', 'NY', 'P005');

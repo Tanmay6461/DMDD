@@ -1,6 +1,29 @@
--- Patient Details
+-- Drop tables if they exist
+BEGIN
+    EXECUTE IMMEDIATE 'DROP TABLE Prescribed_Diagnostics CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE Doctor_Details CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE Medication_Information CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE Patient CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE Patient_Address CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE Medical_History CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE Drug_Details CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE Diagnostic_Test CASCADE CONSTRAINTS';
+EXCEPTION
+    WHEN OTHERS THEN
+        NULL; 
+END;
+/
 
-CREATE TABLE IF NOT EXISTS Patient (
+-- Doctor details
+CREATE TABLE Doctor_Details (
+    doctor_id INTEGER PRIMARY KEY,
+    first_name VARCHAR2(50) NOT NULL,
+    last_name VARCHAR2(50) NOT NULL,
+    specialization VARCHAR2(50)
+);
+
+-- Patient details
+CREATE TABLE Patient (
     patient_id INTEGER PRIMARY KEY,
     first_name VARCHAR2(150) NOT NULL,
     last_name VARCHAR2(150) NOT NULL,
@@ -8,19 +31,8 @@ CREATE TABLE IF NOT EXISTS Patient (
     CONSTRAINT Patient_Doctor_FK FOREIGN KEY (doctor_id) REFERENCES Doctor_Details (doctor_id)
 );
 
-
-
--- doctor details
-CREATE TABLE IF NOT EXISTS Doctor_Details (
-    doctor_id INTEGER PRIMARY KEY,
-    first_name VARCHAR2(50) NOT NULL,
-    last_name VARCHAR2(50) NOT NULL,
-    specialization VARCHAR2(50)
-);
-
-
 -- Patient address
-CREATE TABLE IF NOT EXISTS Patient_Address (
+CREATE TABLE Patient_Address (
     address_id INTEGER PRIMARY KEY,
     street_name VARCHAR2(100),
     city VARCHAR2(50),
@@ -29,27 +41,25 @@ CREATE TABLE IF NOT EXISTS Patient_Address (
     CONSTRAINT Patient_Address_FK FOREIGN KEY (patient_id) REFERENCES Patient (patient_id)
 );
 
---Medical history
-CREATE TABLE IF NOT EXISTS Medical_History (
+-- Medical history
+CREATE TABLE Medical_History (
     patient_history_id INTEGER PRIMARY KEY,
-    symptoms VARCHAR(150),
-    diagnosis VARCHAR(150),
+    symptoms VARCHAR2(150),
+    diagnosis VARCHAR2(150),
     date_detected DATE,
     patient_id INTEGER NOT NULL,
     CONSTRAINT Medical_History_Patient_FK FOREIGN KEY (patient_id) REFERENCES Patient (patient_id)
 );
 
---Drug details
-CREATE TABLE IF NOT EXISTS Drug_Details (
+-- Drug details
+CREATE TABLE Drug_Details (
     drug_id INTEGER PRIMARY KEY,
     drug_name VARCHAR2(50),
-    drug_price FLOAT
+    drug_price NUMBER
 );
 
-
---Medication Information
-
-CREATE TABLE IF NOT EXISTS Medication_Information (
+-- Medication information
+CREATE TABLE Medication_Information (
     prescription_id INTEGER PRIMARY KEY,
     date_administered DATE NOT NULL,
     patient_id INTEGER NOT NULL,
@@ -60,18 +70,15 @@ CREATE TABLE IF NOT EXISTS Medication_Information (
     CONSTRAINT Medication_Information_Drug_FK FOREIGN KEY (drug_id) REFERENCES Drug_Details (drug_id)
 );
 
-
---Diagnostic Test
-
-CREATE TABLE IF NOT EXISTS Diagnostic_Test (
+-- Diagnostic test
+CREATE TABLE Diagnostic_Test (
     diagnostic_id INTEGER PRIMARY KEY,
     test_name VARCHAR2(50),
-    test_charge FLOAT CHECK(test_charge > 0)
+    test_charge NUMBER CHECK(test_charge > 0)
 );
 
---Prescribed Diagnostics
-
-CREATE TABLE IF NOT EXISTS Prescribed_Diagnostics (
+-- Prescribed diagnostics
+CREATE TABLE Prescribed_Diagnostics (
     prescribed_diagnostics_id INTEGER PRIMARY KEY,
     date_administered DATE NOT NULL,
     test_result VARCHAR2(100),
@@ -81,11 +88,19 @@ CREATE TABLE IF NOT EXISTS Prescribed_Diagnostics (
     CONSTRAINT Prescribed_Diagnostics_Test_FK FOREIGN KEY (diagnostic_test_id) REFERENCES Diagnostic_Test (diagnostic_id)
 );
 
+-- Drop views if they exist
+BEGIN
+   EXECUTE IMMEDIATE 'DROP VIEW Current_Patient_Status';
+   EXECUTE IMMEDIATE 'DROP VIEW Diagnostic_Tests_Prescribed';
+   EXECUTE IMMEDIATE 'DROP VIEW Total_Diagnostic_Charges_Per_Patient';
+EXCEPTION
+   WHEN OTHERS THEN 
+       NULL; 
+END;
+/
 
--- View's
-
--- 1. View: Current Patient Status
-CREATE VIEW IF NOT EXISTS Current_Patient_Status AS
+-- View: Current Patient Status
+CREATE VIEW Current_Patient_Status AS
 SELECT 
     p.patient_id, 
     p.first_name || ' ' || p.last_name AS patient_name, 
@@ -99,9 +114,8 @@ JOIN
 LEFT JOIN 
     Patient_Address a ON p.patient_id = a.patient_id;
 
-
---2. View: Medication Administered
-CREATE VIEW IF NOT EXISTS Diagnostic_Tests_Prescribed AS
+-- View: Diagnostic Tests Prescribed
+CREATE VIEW Diagnostic_Tests_Prescribed AS
 SELECT 
     pd.prescribed_diagnostics_id, 
     dt.test_name, 
@@ -116,23 +130,20 @@ JOIN
 JOIN 
     Patient p ON pd.patient_id = p.patient_id;
 
-
---3. 
-CREATE VIEW IF NOT EXISTS Total_Diagnostic_Charges_Per_Patient AS
+-- View: Total Diagnostic Charges Per Patient
+CREATE VIEW Total_Diagnostic_Charges_Per_Patient AS
 SELECT 
-    p.patient_id, 
-    p.first_name || ' ' || p.last_name AS patient_name, 
-    SUM(dt.test_charge) AS total_charges
+   p.patient_id, 
+   p.first_name || ' ' || p.last_name AS patient_name, 
+   SUM(dt.test_charge) AS total_charges
 FROM 
-    Prescribed_Diagnostics pd
+   Prescribed_Diagnostics pd
 JOIN 
-    Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
+   Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
 JOIN 
-    Patient p ON pd.patient_id = p.patient_id
+   Patient p ON pd.patient_id = p.patient_id
 GROUP BY 
-    p.patient_id, p.first_name, p.last_name;
-
-
+   p.patient_id, p.first_name, p.last_name;
 
 
 

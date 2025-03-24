@@ -115,3 +115,11 @@ INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) V
 ('A003', '789 Oak St.', 'Springfield', 'IL', 'P003'),
 ('A004', '321 Maple St.', 'Chicago', 'IL', 'P004'),
 ('A005', '654 Pine St.', 'New York City', 'NY', 'P005');
+
+
+INSERT INTO Doctor_Details (doctor_id, first_name, last_name, specialization) VALUES 
+('D001', 'John', 'Doe', 'Cardiology'),
+('D002', 'Jane', 'Smith', 'Neurology'),
+('D003', 'Emily', 'Clark', 'Pediatrics'),
+('D004', 'Michael', 'Brown', 'Orthopedics'),
+('D005', 'Sarah', 'Johnson', 'Dermatology');

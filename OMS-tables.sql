@@ -19,6 +19,12 @@ CREATE TABLE Medication_Information (
     CONSTRAINT fk_medication_patient FOREIGN KEY (patient_id) REFERENCES Patient_Records (patient_id)
 );
 
+CREATE TABLE IF NOT EXISTS Diagnostic_Test (
+    diagnostic_id VARCHAR2(50) PRIMARY KEY,
+    test_name VARCHAR2(50),
+    test_charge FLOAT CHECK(test_charge > 0)
+);
+
 CREATE VIEW IF NOT EXISTS Current_Patient_Details AS
 SELECT 
     p.patient_id,

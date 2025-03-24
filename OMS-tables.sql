@@ -133,3 +133,55 @@ GROUP BY
     p.patient_id, p.first_name, p.last_name;
 
 
+
+
+
+-- Insert sample data into Doctor_Details
+INSERT INTO Doctor_Details (doctor_id, first_name, last_name, specialization) VALUES 
+(1, 'John', 'Doe', 'Cardiology'),
+(2, 'Alice', 'Smith', 'Neurology'),
+(3, 'Robert', 'Brown', 'Orthopedics');
+
+-- Insert sample data into Patient
+INSERT INTO Patient (patient_id, first_name, last_name, doctor_id) VALUES 
+(101, 'Michael', 'Johnson', 1),
+(102, 'Sarah', 'Williams', 2),
+(103, 'David', 'Miller', 3);
+
+-- Insert sample data into Patient_Address
+INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) VALUES 
+(1, '123 Main St', 'New York', 'NY', 101),
+(2, '456 Oak Ave', 'Los Angeles', 'CA', 102),
+(3, '789 Pine Rd', 'Chicago', 'IL', 103);
+
+-- Insert sample data into Medical_History
+INSERT INTO Medical_History (patient_history_id, symptoms, diagnosis, date_detected, patient_id) VALUES 
+(1, 'Chest pain', 'Heart Disease', TO_DATE('2024-01-15', 'YYYY-MM-DD'), 101),
+(2, 'Headache, dizziness', 'Migraine', TO_DATE('2024-02-10', 'YYYY-MM-DD'), 102),
+(3, 'Joint pain', 'Arthritis', TO_DATE('2024-03-05', 'YYYY-MM-DD'), 103);
+
+-- Insert sample data into Drug_Details
+INSERT INTO Drug_Details (drug_id, drug_name, drug_price) VALUES 
+(1, 'Aspirin', 10.50),
+(2, 'Ibuprofen', 15.00),
+(3, 'Paracetamol', 5.75);
+
+-- Insert sample data into Medication_Information
+INSERT INTO Medication_Information (prescription_id, date_administered, patient_id, doctor_id, drug_id) VALUES 
+(1, TO_DATE('2024-01-20', 'YYYY-MM-DD'), 101, 1, 1),
+(2, TO_DATE('2024-02-15', 'YYYY-MM-DD'), 102, 2, 2),
+(3, TO_DATE('2024-03-10', 'YYYY-MM-DD'), 103, 3, 3);
+
+-- Insert sample data into Diagnostic_Test
+INSERT INTO Diagnostic_Test (diagnostic_id, test_name, test_charge) VALUES 
+(1, 'Blood Test', 50.00),
+(2, 'MRI Scan', 500.00),
+(3, 'X-Ray', 150.00);
+
+-- Insert sample data into Prescribed_Diagnostics
+INSERT INTO Prescribed_Diagnostics (prescribed_diagnostics_id, date_administered, test_result, patient_id, diagnostic_test_id) VALUES 
+(1, TO_DATE('2024-01-22', 'YYYY-MM-DD'), 'Normal', 101, 1),
+(2, TO_DATE('2024-02-18', 'YYYY-MM-DD'), 'No issues detected', 102, 2),
+(3, TO_DATE('2024-03-12', 'YYYY-MM-DD'), 'Mild arthritis', 103, 3);
+
+

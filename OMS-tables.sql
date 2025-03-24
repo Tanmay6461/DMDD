@@ -9,7 +9,6 @@ CREATE TABLE Patient_Records (
     CONSTRAINT fk_patient_doctor FOREIGN KEY (doctor_id) REFERENCES Doctor_Details (doctor_id));
     
  
- 
 CREATE TABLE IF NOT EXISTS Diagnostic_Test (
     diagnostic_id VARCHAR2(50) PRIMARY KEY,
     test_name VARCHAR2(50),

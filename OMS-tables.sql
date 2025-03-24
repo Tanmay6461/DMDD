@@ -89,3 +89,18 @@ JOIN
     Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
 JOIN 
     Patient_Records p ON pd.patient_id = p.patient_id;
+
+
+CREATE VIEW IF NOT EXISTS Total_Diagnostic_Charges_Per_Patient AS
+SELECT 
+    p.patient_id,
+    p.first_name || ' ' || p.last_name AS patient_name,
+    SUM(dt.test_charge) AS total_charges
+FROM 
+    Prescribed_Diagnostics pd
+JOIN 
+    Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
+JOIN 
+    Patient_Records p ON pd.patient_id = p.patient_id
+GROUP BY 
+    p.patient_id, p.first_name, p.last_name;

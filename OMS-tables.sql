@@ -32,14 +32,8 @@ JOIN
     Doctor_Details d ON p.doctor_id = d.doctor_id
 LEFT JOIN 
     Patient_Address a ON p.patient_id = a.patient_id;
-    
-INSERT INTO Doctor_Details (doctor_id, first_name, last_name, specialization) VALUES 
-('D001', 'John', 'Doe', 'Cardiology'),
-('D002', 'Jane', 'Smith', 'Neurology'),
-('D003', 'Emily', 'Clark', 'Pediatrics'),
-('D004', 'Michael', 'Brown', 'Orthopedics'),
-('D005', 'Sarah', 'Johnson', 'Dermatology');
-=======
+
+
 -- doctor details
 CREATE TABLE IF NOT EXISTS Doctor_Details (
     doctor_id VARCHAR2(50) PRIMARY KEY,

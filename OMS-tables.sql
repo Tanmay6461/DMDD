@@ -60,6 +60,20 @@ CREATE TABLE IF NOT EXISTS Prescribed_Diagnostics (
     CONSTRAINT fk_prescribed_diagnostics_test FOREIGN KEY (diagnostic_test_id) REFERENCES Diagnostic_Test (diagnostic_id)
 );
 
+CREATE VIEW IF NOT EXISTS Current_Patient_Details AS
+SELECT 
+    p.patient_id,
+    p.first_name || ' ' || p.last_name AS patient_name,
+    d.first_name || ' ' || d.last_name AS doctor_name,
+    d.specialization AS doctor_specialization,
+    a.street_name || ', ' || a.city || ', ' || a.state AS address
+FROM 
+    Patient_Records p
+JOIN 
+    Doctor_Details d ON p.doctor_id = d.doctor_id
+LEFT JOIN 
+    Patient_Address a ON p.patient_id = a.patient_id;
+
 --2. View: Medication Administered
 CREATE VIEW IF NOT EXISTS Diagnostic_Tests_Prescribed AS
 SELECT 

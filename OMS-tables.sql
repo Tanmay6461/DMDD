@@ -107,6 +107,16 @@ JOIN
 GROUP BY 
     p.patient_id, p.first_name, p.last_name;
 
+    
+    
+INSERT INTO Patient_Records (patient_id, first_name, last_name, doctor_id) VALUES 
+('P001', 'Alice', 'Green', 'D001'),
+('P002', 'Bob', 'White', 'D002'),
+('P003', 'Charlie', 'Black', 'D003'),
+('P004', 'Diana', 'Blue', 'D004'),
+('P005', 'Eve', 'Gray', 'D005');
+
+
 
 
 INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) VALUES 

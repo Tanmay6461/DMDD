@@ -230,6 +230,114 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
             DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
     END add_medical_record;
 
+
+
+--3 Order diagnostic test implementation with enhanced validations
+    PROCEDURE order_diagnostic_test(
+        p_patient_id IN INTEGER,
+        p_diagnostic_id IN INTEGER,
+        p_test_result IN VARCHAR2
+    ) AS
+        v_patient_exists NUMBER;
+        v_diagnostic_exists NUMBER;
+        v_prescribed_diagnostics_id INTEGER;
+        v_test_charge NUMBER;
+    BEGIN
+        -- Individual null parameter checks
+        IF p_patient_id IS NULL THEN
+            RAISE_APPLICATION_ERROR(healthcare_exceptions.null_parameter_code, 'Patient ID cannot be NULL');
+        END IF;
+        
+        IF p_diagnostic_id IS NULL THEN
+            RAISE_APPLICATION_ERROR(healthcare_exceptions.null_parameter_code, 'Diagnostic ID cannot be NULL');
+        END IF;
+        
+        -- Validate ID formats
+        IF p_patient_id <= 0 THEN
+            RAISE_APPLICATION_ERROR(-20030, 'Patient ID must be a positive number');
+        END IF;
+        
+        IF p_diagnostic_id <= 0 THEN
+            RAISE_APPLICATION_ERROR(-20031, 'Diagnostic ID must be a positive number');
+        END IF;
+        
+        -- Validate test result if provided
+        IF p_test_result IS NOT NULL AND LENGTH(p_test_result) > 100 THEN
+            RAISE_APPLICATION_ERROR(-20032, 'Test result cannot exceed 100 characters');
+        END IF;
+        
+        -- Check if patient exists
+        SELECT COUNT(*) INTO v_patient_exists
+        FROM Patient
+        WHERE patient_id = p_patient_id;
+        
+        IF v_patient_exists = 0 THEN
+            RAISE_APPLICATION_ERROR(healthcare_exceptions.patient_not_found_code, 
+                'Patient ID ' || p_patient_id || ' not found');
+        END IF;
+        
+        -- Check if diagnostic test exists and get its charge
+        BEGIN
+            SELECT COUNT(*), MAX(test_charge) 
+            INTO v_diagnostic_exists, v_test_charge
+            FROM Diagnostic_Test
+            WHERE diagnostic_id = p_diagnostic_id;
+            
+            IF v_diagnostic_exists = 0 THEN
+                RAISE_APPLICATION_ERROR(healthcare_exceptions.diagnostic_not_found_code, 
+                    'Diagnostic ID ' || p_diagnostic_id || ' not found');
+            END IF;
+            
+            -- Validate test charge as per CHECK constraint
+            IF v_test_charge <= 0 THEN
+                RAISE_APPLICATION_ERROR(-20033, 'Diagnostic test charge must be greater than 0');
+            END IF;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE_APPLICATION_ERROR(healthcare_exceptions.diagnostic_not_found_code, 
+                    'Diagnostic ID ' || p_diagnostic_id || ' not found');
+        END;
+        
+        -- Check for duplicate recent diagnostic test
+        DECLARE
+            v_recent_tests NUMBER;
+        BEGIN
+            SELECT COUNT(*) INTO v_recent_tests
+            FROM Prescribed_Diagnostics
+            WHERE patient_id = p_patient_id
+            AND diagnostic_test_id = p_diagnostic_id
+            AND date_administered > SYSDATE - 7;  -- Within the last week
+            
+            IF v_recent_tests > 0 THEN
+                DBMS_OUTPUT.PUT_LINE('Warning: This test was already ordered for this patient within the last 7 days');
+            END IF;
+        END;
+        
+        -- Get new prescribed diagnostics ID
+        SELECT NVL(MAX(prescribed_diagnostics_id), 0) + 1 INTO v_prescribed_diagnostics_id 
+        FROM Prescribed_Diagnostics;
+        
+        -- Insert prescribed diagnostic
+        INSERT INTO Prescribed_Diagnostics (
+            prescribed_diagnostics_id, date_administered, test_result, 
+            patient_id, diagnostic_test_id
+        )
+        VALUES (
+            v_prescribed_diagnostics_id, SYSDATE, TRIM(p_test_result), 
+            p_patient_id, p_diagnostic_id
+        );
+        
+        COMMIT;
+        DBMS_OUTPUT.PUT_LINE('Diagnostic test ordered successfully');
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK;
+            DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+    END order_diagnostic_test;
+    
+
+
+
 END healthcare_pkg;
 /
 

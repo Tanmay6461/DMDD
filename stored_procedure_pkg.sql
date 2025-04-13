@@ -26,3 +26,34 @@
         IF p_doctor_id IS NULL THEN
             RAISE_APPLICATION_ERROR(healthcare_exceptions.null_parameter_code, 'Doctor ID cannot be NULL');
         END IF;
+        -- Validate ID formats
+        IF p_patient_id <= 0 THEN
+            RAISE_APPLICATION_ERROR(-20010, 'Patient ID must be a positive number');
+        END IF;
+        
+        IF p_doctor_id <= 0 THEN
+            RAISE_APPLICATION_ERROR(-20011, 'Doctor ID must be a positive number');
+        END IF;
+        
+        -- Validate name lengths (based on your table constraints)
+        IF LENGTH(p_first_name) < 1 OR LENGTH(p_first_name) > 150 THEN
+            RAISE_APPLICATION_ERROR(-20012, 'First name must be between 1 and 150 characters');
+        END IF;
+        
+        IF LENGTH(p_last_name) < 1 OR LENGTH(p_last_name) > 150 THEN
+            RAISE_APPLICATION_ERROR(-20013, 'Last name must be between 1 and 150 characters');
+        END IF;
+        
+        -- Validate address data if provided
+        IF p_street_name IS NOT NULL AND LENGTH(p_street_name) > 100 THEN
+            RAISE_APPLICATION_ERROR(-20014, 'Street name cannot exceed 100 characters');
+        END IF;
+        
+        IF p_city IS NOT NULL AND LENGTH(p_city) > 50 THEN
+            RAISE_APPLICATION_ERROR(-20015, 'City cannot exceed 50 characters');
+        END IF;
+        
+        IF p_state IS NOT NULL AND LENGTH(p_state) > 20 THEN
+            RAISE_APPLICATION_ERROR(-20016, 'State cannot exceed 20 characters');
+        END IF;
+

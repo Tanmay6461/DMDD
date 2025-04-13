@@ -56,4 +56,43 @@
         IF p_state IS NOT NULL AND LENGTH(p_state) > 20 THEN
             RAISE_APPLICATION_ERROR(-20016, 'State cannot exceed 20 characters');
         END IF;
+         -- Check if doctor exists
+        SELECT COUNT(*) INTO v_doctor_exists
+        FROM Doctor_Details
+        WHERE doctor_id = p_doctor_id;
+        
+        IF v_doctor_exists = 0 THEN
+            RAISE_APPLICATION_ERROR(healthcare_exceptions.doctor_not_found_code, 
+                'Doctor ID ' || p_doctor_id || ' not found');
+        END IF;
+        
+        -- Check if patient already exists
+        SELECT COUNT(*) INTO v_patient_exists
+        FROM Patient
+        WHERE patient_id = p_patient_id;
+        
+        IF v_patient_exists > 0 THEN
+            RAISE_APPLICATION_ERROR(healthcare_exceptions.patient_exists_code, 
+                'Patient ID ' || p_patient_id || ' already exists');
+        END IF;
+        
+        -- Insert patient details
+        INSERT INTO Patient (patient_id, first_name, last_name, doctor_id)
+        VALUES (p_patient_id, TRIM(p_first_name), TRIM(p_last_name), p_doctor_id);
+        
+        -- Insert patient address if provided
+        IF p_street_name IS NOT NULL OR p_city IS NOT NULL OR p_state IS NOT NULL THEN
+            INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id)
+            VALUES ((SELECT NVL(MAX(address_id), 0) + 1 FROM Patient_Address), 
+                    TRIM(p_street_name), TRIM(p_city), UPPER(TRIM(p_state)), p_patient_id);
+        END IF;
+        
+        COMMIT;
+        DBMS_OUTPUT.PUT_LINE('Patient registered successfully');
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK;
+            DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+    END register_patient;
+    
 

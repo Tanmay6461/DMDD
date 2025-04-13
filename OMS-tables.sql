@@ -14,9 +14,57 @@ EXCEPTION
 END;
 /
 
+<<<<<<< HEAD
+
+-- Patient Details
+CREATE TABLE Patient_Records (
+    patient_id VARCHAR2(50) PRIMARY KEY,
+    first_name VARCHAR2(50) NOT NULL,
+    last_name VARCHAR2(50) NOT NULL,
+    doctor_id VARCHAR2(50) NOT NULL,
+    CONSTRAINT fk_patient_doctor FOREIGN KEY (doctor_id) REFERENCES Doctor_Details (doctor_id));
+    
+ 
+CREATE TABLE IF NOT EXISTS Diagnostic_Test (
+    diagnostic_id VARCHAR2(50) PRIMARY KEY,
+    test_name VARCHAR2(50),
+    test_charge FLOAT CHECK(test_charge > 0)
+);
+ 
+    
+CREATE TABLE Medication_Information (
+    prescription_id VARCHAR2(50) PRIMARY KEY,
+    medicine_name VARCHAR2(100),
+    medicine_composition VARCHAR2(150),
+    date_administered DATE NOT NULL,
+    patient_id VARCHAR2(50) NOT NULL,
+    nurse_id VARCHAR2(50),
+    CONSTRAINT fk_medication_patient FOREIGN KEY (patient_id) REFERENCES Patient_Records (patient_id)
+);
+
+CREATE VIEW IF NOT EXISTS Current_Patient_Details AS
+SELECT 
+    p.patient_id,
+    p.first_name || ' ' || p.last_name AS patient_name,
+    d.first_name || ' ' || d.last_name AS doctor_name,
+    d.specialization AS doctor_specialization,
+    a.street_name || ', ' || a.city || ', ' || a.state AS address
+FROM 
+    Patient_Records p
+JOIN 
+    Doctor_Details d ON p.doctor_id = d.doctor_id
+LEFT JOIN 
+    Patient_Address a ON p.patient_id = a.patient_id;
+
+
+-- doctor details
+CREATE TABLE IF NOT EXISTS Doctor_Details (
+    doctor_id VARCHAR2(50) PRIMARY KEY,
+=======
 -- Doctor details
 CREATE TABLE Doctor_Details (
     doctor_id INTEGER PRIMARY KEY,
+>>>>>>> cee0b29cba0ff588cd35bedb88c682c6bc9b4197
     first_name VARCHAR2(50) NOT NULL,
     last_name VARCHAR2(50) NOT NULL,
     specialization VARCHAR2(50)
@@ -31,6 +79,24 @@ CREATE TABLE Patient (
     CONSTRAINT Patient_Doctor_FK FOREIGN KEY (doctor_id) REFERENCES Doctor_Details (doctor_id)
 );
 
+<<<<<<< HEAD
+CREATE VIEW IF NOT EXISTS Current_Patient_Details AS
+SELECT 
+    p.patient_id,
+    p.first_name || ' ' || p.last_name AS patient_name,
+    d.first_name || ' ' || d.last_name AS doctor_name,
+    d.specialization AS doctor_specialization,
+    a.street_name || ', ' || a.city || ', ' || a.state AS address
+FROM 
+    Patient_Records p
+JOIN 
+    Doctor_Details d ON p.doctor_id = d.doctor_id
+LEFT JOIN 
+    Patient_Address a ON p.patient_id = a.patient_id;
+
+--2. View: Medication Administered
+CREATE VIEW IF NOT EXISTS Diagnostic_Tests_Prescribed AS
+=======
 -- Patient address
 CREATE TABLE Patient_Address (
     address_id INTEGER PRIMARY KEY,
@@ -101,6 +167,7 @@ END;
 
 -- View: Current Patient Status
 CREATE VIEW Current_Patient_Status AS
+>>>>>>> cee0b29cba0ff588cd35bedb88c682c6bc9b4197
 SELECT 
     p.patient_id, 
     p.first_name || ' ' || p.last_name AS patient_name, 

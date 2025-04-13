@@ -1,3 +1,5 @@
+CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
+   
     PROCEDURE register_patient(
         p_patient_id IN INTEGER,
         p_first_name IN VARCHAR2,
@@ -94,5 +96,7 @@
             ROLLBACK;
             DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
     END register_patient;
-    
+
+END healthcare_pkg;
+/
 

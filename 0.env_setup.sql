@@ -1,0 +1,48 @@
+
+-- Execute this as SYS or SYSTEM
+
+-- Drop users if they exist
+BEGIN
+    -- Drop user OMS if it exists
+    FOR rec IN (SELECT username FROM dba_users WHERE username = 'OMS') LOOP
+        EXECUTE IMMEDIATE 'DROP USER OMS CASCADE';
+    END LOOP;
+
+    -- Drop user OMS_APP_USER if it exists
+    FOR rec IN (SELECT username FROM dba_users WHERE username = 'OMS_APP_USER') LOOP
+        EXECUTE IMMEDIATE 'DROP USER OMS_APP_USER CASCADE';
+    END LOOP;
+END;
+/
+
+
+-- Schema owner
+CREATE USER OMS IDENTIFIED BY "Dmddproject@2025";
+ALTER USER OMS DEFAULT TABLESPACE users QUOTA UNLIMITED ON users;
+ALTER USER OMS TEMPORARY TABLESPACE TEMP;
+GRANT CONNECT, CREATE SESSION, CREATE TABLE, CREATE VIEW, CREATE ROLE, CREATE USER TO OMS;
+GRANT CREATE PROCEDURE TO OMS;
+
+-- Application user (limited access)
+CREATE USER OMS_APP_USER IDENTIFIED BY "SecureUser@2025";
+ALTER USER OMS_APP_USER DEFAULT TABLESPACE users QUOTA UNLIMITED ON users;
+ALTER USER OMS_APP_USER TEMPORARY TABLESPACE TEMP;
+GRANT CONNECT, CREATE SESSION TO OMS_APP_USER;
+
+
+-- Grant the ability to create roles
+GRANT CREATE ROLE TO OMS;
+
+-- Grant the ability to create users
+GRANT CREATE USER TO OMS;
+
+-- Additional privileges needed for complete user management
+GRANT ALTER USER TO OMS;
+GRANT DROP USER TO OMS;
+GRANT DROP ANY ROLE TO OMS;
+
+---- Grant system privileges for granting other privileges
+--GRANT GRANT ANY PRIVILEGE TO OMS;
+--GRANT GRANT ANY ROLE TO OMS;
+
+

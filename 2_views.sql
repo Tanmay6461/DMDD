@@ -56,5 +56,26 @@ LEFT JOIN
     Drug_Details dd ON mi.drug_id = dd.drug_id
 GROUP BY 
     d.doctor_id, d.first_name, d.last_name, d.specialization;
-    
+
+
+-- 3. Drug Utilization View
+-- Analyzes prescription patterns and drug usage
+CREATE OR REPLACE VIEW Drug_Utilization AS
+SELECT 
+    dd.drug_id,
+    dd.drug_name,
+    dd.drug_price,
+    COUNT(mi.prescription_id) AS times_prescribed,
+    COUNT(DISTINCT mi.patient_id) AS unique_patients,
+    COUNT(DISTINCT mi.doctor_id) AS prescribing_doctors,
+    SUM(dd.drug_price) AS total_revenue,
+    MAX(mi.date_administered) AS last_prescribed_date
+FROM 
+    Drug_Details dd
+LEFT JOIN 
+    Medication_Information mi ON dd.drug_id = mi.drug_id
+GROUP BY 
+    dd.drug_id, dd.drug_name, dd.drug_price
+ORDER BY 
+    times_prescribed DESC;
     

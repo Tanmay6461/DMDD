@@ -1,6 +1,5 @@
 
--- Execute this as SYS or SYSTEM
-
+--execute as admin
 -- Drop users if they exist
 BEGIN
     -- Drop user OMS if it exists
@@ -40,9 +39,5 @@ GRANT CREATE USER TO OMS;
 GRANT ALTER USER TO OMS;
 GRANT DROP USER TO OMS;
 GRANT DROP ANY ROLE TO OMS;
-
----- Grant system privileges for granting other privileges
---GRANT GRANT ANY PRIVILEGE TO OMS;
---GRANT GRANT ANY ROLE TO OMS;
 
 

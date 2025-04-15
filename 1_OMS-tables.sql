@@ -16,7 +16,7 @@ END;
 
 -- Doctor details
 CREATE TABLE Doctor_Details (
-    doctor_id INTEGER PRIMARY KEY,
+    doctor_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     first_name VARCHAR2(50) NOT NULL,
     last_name VARCHAR2(50) NOT NULL,
     specialization VARCHAR2(50)
@@ -24,12 +24,11 @@ CREATE TABLE Doctor_Details (
 
 -- Patient details
 CREATE TABLE Patient (
-    patient_id INTEGER PRIMARY KEY,
+    patient_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    address_id INTEGER ,
     first_name VARCHAR2(150) NOT NULL,
-    last_name VARCHAR2(150) NOT NULL,
-    doctor_id INTEGER NOT NULL,
-    CONSTRAINT Patient_Doctor_FK FOREIGN KEY (doctor_id) REFERENCES Doctor_Details (doctor_id)
-);
+    last_name VARCHAR2(150) NOT NULL
+    );
 
 -- Patient address
 CREATE TABLE Patient_Address (
@@ -60,7 +59,7 @@ CREATE TABLE Drug_Details (
 
 -- Medication information
 CREATE TABLE Medication_Information (
-    prescription_id INTEGER PRIMARY KEY,
+    prescription_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     date_administered DATE NOT NULL,
     patient_id INTEGER NOT NULL,
     doctor_id INTEGER NOT NULL,
@@ -70,16 +69,17 @@ CREATE TABLE Medication_Information (
     CONSTRAINT Medication_Information_Drug_FK FOREIGN KEY (drug_id) REFERENCES Drug_Details (drug_id)
 );
 
+
 -- Diagnostic test
 CREATE TABLE Diagnostic_Test (
-    diagnostic_id INTEGER PRIMARY KEY,
+    diagnostic_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     test_name VARCHAR2(50),
     test_charge NUMBER CHECK(test_charge > 0)
 );
 
 -- Prescribed diagnostics
 CREATE TABLE Prescribed_Diagnostics (
-    prescribed_diagnostics_id INTEGER PRIMARY KEY,
+    prescribed_diagnostics_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     date_administered DATE NOT NULL,
     test_result VARCHAR2(100),
     patient_id INTEGER NOT NULL,
@@ -88,128 +88,89 @@ CREATE TABLE Prescribed_Diagnostics (
     CONSTRAINT Prescribed_Diagnostics_Test_FK FOREIGN KEY (diagnostic_test_id) REFERENCES Diagnostic_Test (diagnostic_id)
 );
 
--- Drop views if they exist
-BEGIN
-   EXECUTE IMMEDIATE 'DROP VIEW Current_Patient_Status';
-   EXECUTE IMMEDIATE 'DROP VIEW Diagnostic_Tests_Prescribed';
-   EXECUTE IMMEDIATE 'DROP VIEW Total_Diagnostic_Charges_Per_Patient';
-EXCEPTION
-   WHEN OTHERS THEN 
-       NULL; -- Ignore errors if views do not exist
-END;
-/
 
--- View: Current Patient Status
-CREATE VIEW Current_Patient_Status AS
-SELECT 
-    p.patient_id, 
-    p.first_name || ' ' || p.last_name AS patient_name, 
-    d.first_name || ' ' || d.last_name AS doctor_name, 
-    d.specialization AS doctor_specialization, 
-    a.street_name || ', ' || a.city || ', ' || a.state AS address
-FROM 
-    Patient p
-JOIN 
-    Doctor_Details d ON p.doctor_id = d.doctor_id
-LEFT JOIN 
-    Patient_Address a ON p.patient_id = a.patient_id;
+-- Insert into Doctor_Details
+INSERT INTO Doctor_Details (first_name, last_name, specialization) 
+VALUES ('John', 'Smith', 'Cardiology');
 
--- View: Diagnostic Tests Prescribed
-CREATE VIEW Diagnostic_Tests_Prescribed AS
-SELECT 
-    pd.prescribed_diagnostics_id, 
-    dt.test_name, 
-    dt.test_charge, 
-    pd.date_administered, 
-    pd.test_result, 
-    p.first_name || ' ' || p.last_name AS patient_name
-FROM 
-    Prescribed_Diagnostics pd
-JOIN 
-    Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
-JOIN 
-    Patient p ON pd.patient_id = p.patient_id;
+INSERT INTO Doctor_Details (first_name, last_name, specialization) 
+VALUES ('Sarah', 'Johnson', 'Neurology');
 
--- View: Total Diagnostic Charges Per Patient
-CREATE VIEW Total_Diagnostic_Charges_Per_Patient AS
-SELECT 
-   p.patient_id, 
-   p.first_name || ' ' || p.last_name AS patient_name, 
-   SUM(dt.test_charge) AS total_charges
-FROM 
-   Prescribed_Diagnostics pd
-JOIN 
-   Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
-JOIN 
-   Patient p ON pd.patient_id = p.patient_id
-GROUP BY 
-   p.patient_id, p.first_name, p.last_name;
+INSERT INTO Doctor_Details (first_name, last_name, specialization) 
+VALUES ('Michael', 'Brown', 'Orthopedics');
 
+-- Insert into Patient
+INSERT INTO Patient (first_name, last_name) 
+VALUES ('Robert', 'Williams');
 
+INSERT INTO Patient (first_name, last_name) 
+VALUES ('Emily', 'Davis');
 
+INSERT INTO Patient (first_name, last_name) 
+VALUES ('James', 'Miller');
 
--- Insert sample data into Doctor_Details
-INSERT INTO Doctor_Details (doctor_id, first_name, last_name, specialization) VALUES 
-(1, 'John', 'Doe', 'Cardiology');
-INSERT INTO Doctor_Details (doctor_id, first_name, last_name, specialization) VALUES 
-(2, 'Alice', 'Smith', 'Neurology');
-INSERT INTO Doctor_Details (doctor_id, first_name, last_name, specialization) VALUES 
-(3, 'Robert', 'Brown', 'Orthopedics');
+-- Insert into Patient_Address (need to get patient_id values first)
+INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) 
+VALUES (1, '123 Main St', 'New York', 'NY', 1);
 
--- Insert sample data into Patient
-INSERT INTO Patient (patient_id, first_name, last_name, doctor_id) VALUES 
-(101, 'Michael', 'Johnson', 1);
-INSERT INTO Patient (patient_id, first_name, last_name, doctor_id) VALUES 
-(102, 'Sarah', 'Williams', 2);
-INSERT INTO Patient (patient_id, first_name, last_name, doctor_id) VALUES 
-(103, 'David', 'Miller', 3);
+INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) 
+VALUES (2, '456 Oak Ave', 'Los Angeles', 'CA', 2);
 
--- Insert sample data into Patient_Address
-INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) VALUES 
-(1, '123 Main St', 'New York', 'NY', 101);
-INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) VALUES 
-(2, '456 Oak Ave', 'Los Angeles', 'CA', 102);
-INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) VALUES 
-(3, '789 Pine Rd', 'Chicago', 'IL', 103);
+INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id) 
+VALUES (3, '789 Pine Rd', 'Chicago', 'IL', 3);
 
--- Insert sample data into Medical_History
-INSERT INTO Medical_History (patient_history_id, symptoms, diagnosis, date_detected, patient_id) VALUES 
-(1, 'Chest pain', 'Heart Disease', TO_DATE('2024-01-15', 'YYYY-MM-DD'), 101);
-INSERT INTO Medical_History (patient_history_id, symptoms, diagnosis, date_detected, patient_id) VALUES 
-(2, 'Headache, dizziness', 'Migraine', TO_DATE('2024-02-10', 'YYYY-MM-DD'), 102);
-INSERT INTO Medical_History (patient_history_id, symptoms, diagnosis, date_detected, patient_id) VALUES 
-(3, 'Joint pain', 'Arthritis', TO_DATE('2024-03-05', 'YYYY-MM-DD'), 103);
+-- Update patient records with address_id
+UPDATE Patient SET address_id = 1 WHERE patient_id = 1;
+UPDATE Patient SET address_id = 2 WHERE patient_id = 2;
+UPDATE Patient SET address_id = 3 WHERE patient_id = 3;
 
--- Insert sample data into Drug_Details
-INSERT INTO Drug_Details (drug_id, drug_name, drug_price) VALUES 
-(1, 'Aspirin', 10.50);
-INSERT INTO Drug_Details (drug_id, drug_name, drug_price) VALUES 
-(2, 'Ibuprofen', 15.00);
-INSERT INTO Drug_Details (drug_id, drug_name, drug_price) VALUES 
-(3, 'Paracetamol', 5.75);
+-- Insert into Medical_History
+INSERT INTO Medical_History (patient_history_id, symptoms, diagnosis, date_detected, patient_id) 
+VALUES (1, 'Chest pain, shortness of breath', 'Hypertension', TO_DATE('2024-01-15', 'YYYY-MM-DD'), 1);
 
--- Insert sample data into Medication_Information
-INSERT INTO Medication_Information (prescription_id, date_administered, patient_id, doctor_id, drug_id) VALUES 
-(1, TO_DATE('2024-01-20', 'YYYY-MM-DD'), 101, 1, 1);
-INSERT INTO Medication_Information (prescription_id, date_administered, patient_id, doctor_id, drug_id) VALUES 
-(2, TO_DATE('2024-02-15', 'YYYY-MM-DD'), 102, 2, 2);
-INSERT INTO Medication_Information (prescription_id, date_administered, patient_id, doctor_id, drug_id) VALUES 
-(3, TO_DATE('2024-03-10', 'YYYY-MM-DD'), 103, 3, 3);
+INSERT INTO Medical_History (patient_history_id, symptoms, diagnosis, date_detected, patient_id) 
+VALUES (2, 'Severe headache, nausea', 'Migraine', TO_DATE('2024-02-10', 'YYYY-MM-DD'), 2);
 
--- Insert sample data into Diagnostic_Test
-INSERT INTO Diagnostic_Test (diagnostic_id, test_name, test_charge) VALUES 
-(1, 'Blood Test', 50.00);
-INSERT INTO Diagnostic_Test (diagnostic_id, test_name, test_charge) VALUES 
-(2, 'MRI Scan', 500.00);
-INSERT INTO Diagnostic_Test (diagnostic_id, test_name, test_charge) VALUES 
-(3, 'X-Ray', 150.00);
+INSERT INTO Medical_History (patient_history_id, symptoms, diagnosis, date_detected, patient_id) 
+VALUES (3, 'Joint pain, swelling', 'Arthritis', TO_DATE('2024-03-05', 'YYYY-MM-DD'), 3);
 
--- Insert sample data into Prescribed_Diagnostics
-INSERT INTO Prescribed_Diagnostics (prescribed_diagnostics_id, date_administered, test_result, patient_id, diagnostic_test_id) VALUES 
-(1, TO_DATE('2024-01-22', 'YYYY-MM-DD'), 'Normal', 101, 1);
-INSERT INTO Prescribed_Diagnostics (prescribed_diagnostics_id, date_administered, test_result, patient_id, diagnostic_test_id) VALUES 
-(2, TO_DATE('2024-02-18', 'YYYY-MM-DD'), 'No issues detected', 102, 2);
-INSERT INTO Prescribed_Diagnostics (prescribed_diagnostics_id, date_administered, test_result, patient_id, diagnostic_test_id) VALUES 
-(3, TO_DATE('2024-03-12', 'YYYY-MM-DD'), 'Mild arthritis', 103, 3);
+-- Insert into Drug_Details
+INSERT INTO Drug_Details (drug_id, drug_name, drug_price) 
+VALUES (1, 'Lisinopril', 25.50);
 
+INSERT INTO Drug_Details (drug_id, drug_name, drug_price) 
+VALUES (2, 'Sumatriptan', 85.75);
+
+INSERT INTO Drug_Details (drug_id, drug_name, drug_price) 
+VALUES (3, 'Ibuprofen', 12.99);
+
+-- Insert into Medication_Information
+INSERT INTO Medication_Information (date_administered, patient_id, doctor_id, drug_id) 
+VALUES (TO_DATE('2024-01-16', 'YYYY-MM-DD'), 1, 1, 1);
+
+INSERT INTO Medication_Information (date_administered, patient_id, doctor_id, drug_id) 
+VALUES (TO_DATE('2024-02-11', 'YYYY-MM-DD'), 2, 2, 2);
+
+INSERT INTO Medication_Information (date_administered, patient_id, doctor_id, drug_id) 
+VALUES (TO_DATE('2024-03-06', 'YYYY-MM-DD'), 3, 3, 3);
+
+-- Insert into Diagnostic_Test
+INSERT INTO Diagnostic_Test (test_name, test_charge) 
+VALUES ('Complete Blood Count', 45.00);
+
+INSERT INTO Diagnostic_Test (test_name, test_charge) 
+VALUES ('MRI Brain Scan', 1200.00);
+
+INSERT INTO Diagnostic_Test (test_name, test_charge) 
+VALUES ('X-Ray Joint', 175.00);
+
+-- Insert into Prescribed_Diagnostics
+INSERT INTO Prescribed_Diagnostics (date_administered, test_result, patient_id, diagnostic_test_id) 
+VALUES (TO_DATE('2024-01-17', 'YYYY-MM-DD'), 'Elevated white blood cell count', 1, 1);
+
+INSERT INTO Prescribed_Diagnostics (date_administered, test_result, patient_id, diagnostic_test_id) 
+VALUES (TO_DATE('2024-02-12', 'YYYY-MM-DD'), 'No abnormalities detected', 2, 2);
+
+INSERT INTO Prescribed_Diagnostics (date_administered, test_result, patient_id, diagnostic_test_id) 
+VALUES (TO_DATE('2024-03-07', 'YYYY-MM-DD'), 'Mild joint inflammation', 3, 3);
 COMMIT;

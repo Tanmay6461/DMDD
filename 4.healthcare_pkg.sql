@@ -1,10 +1,8 @@
 CREATE OR REPLACE PACKAGE healthcare_pkg AS
     -- Register a new patient
     PROCEDURE register_patient(
-        p_patient_id IN INTEGER,
         p_first_name IN VARCHAR2,
         p_last_name IN VARCHAR2,
-        p_doctor_id IN INTEGER,
         p_street_name IN VARCHAR2,
         p_city IN VARCHAR2,
         p_state IN VARCHAR2
@@ -25,6 +23,17 @@ CREATE OR REPLACE PACKAGE healthcare_pkg AS
         p_diagnostic_id IN INTEGER,
         p_test_result IN VARCHAR2
     );
+    
+    -- Get patient expenses (new function)
+    PROCEDURE get_patient_expenses(
+        p_patient_id IN INTEGER,
+        p_med_expenses OUT NUMBER,
+        p_diag_expenses OUT NUMBER,
+        p_total_expenses OUT NUMBER
+    );
+    
+    -- Display patient bill (new procedure)
+    PROCEDURE display_patient_bill(p_patient_id IN INTEGER);
     
 END healthcare_pkg;
 /

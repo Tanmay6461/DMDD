@@ -99,9 +99,6 @@ EXCEPTION
 END get_patient_bill;
 /
 
-
-
-
 CREATE OR REPLACE PROCEDURE update_patient_details(
     p_patient_id   IN INTEGER,
     p_first_name   IN VARCHAR2,
@@ -147,8 +144,8 @@ BEGIN
         -- Create a new address if patient doesn't have one
         SELECT NVL(MAX(address_id), 0) + 1 INTO v_address_id FROM Patient_Address;
         
-        INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id)
-        VALUES (v_address_id, NULL, TRIM(p_city), UPPER(TRIM(p_state)), p_patient_id);
+        INSERT INTO Patient_Address (address_id, street_name, city, state)
+        VALUES (v_address_id, NULL, TRIM(p_city), UPPER(TRIM(p_state)));
         
         -- Update patient with new address_id
         UPDATE Patient
@@ -165,7 +162,6 @@ EXCEPTION
 END update_patient_details;
 /
 
---Stored procedure for DELETE
 CREATE OR REPLACE PROCEDURE delete_patient_record(
     p_patient_id IN INTEGER
 ) AS
@@ -200,7 +196,7 @@ BEGIN
     DELETE FROM Medication_Information WHERE patient_id = p_patient_id;
     DELETE FROM Medical_History WHERE patient_id = p_patient_id;
     
-    -- Delete patient first (since address depends on patient in your schema)
+    -- Delete patient
     DELETE FROM Patient WHERE patient_id = p_patient_id;
     
     -- Delete address if it exists
@@ -216,3 +212,4 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END delete_patient_record;
 /
+

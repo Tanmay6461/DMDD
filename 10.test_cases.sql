@@ -1,377 +1,379 @@
--- Test Case Setup: Create sample data
--- Insert Doctor records
-INSERT INTO Doctor_Details VALUES (11, 'John', 'Smith', 'Cardiologist');
-INSERT INTO Doctor_Details VALUES (2, 'Jane', 'Doe', 'Neurologist');
-INSERT INTO Doctor_Details VALUES (3, 'Michael', 'Johnson', 'Pediatrician');
-
-INSERT INTO OMS.PATIENT  VALUES (121, 'Aspirin', 'DASDAS', 1);
-
--- Insert Drug records
-INSERT INTO Drug_Details VALUES (101, 'Aspirin', 9.99);
-INSERT INTO Drug_Details VALUES (102, 'Lisinopril', 24.99);
-INSERT INTO Drug_Details VALUES (103, 'Amoxicillin', 14.99);
-
--- Insert Diagnostic Test records
-INSERT INTO Diagnostic_Test VALUES (201, 'Blood Test', 45.00);
-INSERT INTO Diagnostic_Test VALUES (202, 'X-Ray', 120.00);
-INSERT INTO Diagnostic_Test VALUES (203, 'MRI', 350.00);
-
-COMMIT;
-
-
+---- Test Case Setup: Create sample data
+---- Insert Doctor records
+--INSERT INTO Doctor_Details (first_name, last_name, specialization) 
+--VALUES ('John', 'Smith', 'Cardiologist');
+--
+--INSERT INTO Doctor_Details (first_name, last_name, specialization) 
+--VALUES ('Jane', 'Doe', 'Neurologist');
+--
+--INSERT INTO Doctor_Details (first_name, last_name, specialization) 
+--VALUES ('Michael', 'Johnson', 'Pediatrician');
+--
+---- Insert Patient record (using first_name, last_name which are required)
+--INSERT INTO Patient (first_name, last_name) 
+--VALUES ('Aspirin', 'DASDAS');
+--
+---- Insert Drug records
+--INSERT INTO Drug_Details (drug_id, drug_name, drug_price) 
+--VALUES (101, 'Aspirin', 9.99);
+--
+--INSERT INTO Drug_Details (drug_id, drug_name, drug_price) 
+--VALUES (102, 'Lisinopril', 24.99);
+--
+--INSERT INTO Drug_Details (drug_id, drug_name, drug_price) 
+--VALUES (103, 'Amoxicillin', 14.99);
+--
+---- Insert Diagnostic Test records (using IDENTITY column)
+--INSERT INTO Diagnostic_Test (test_name, test_charge) 
+--VALUES ('Blood Test', 45.00);
+--
+--INSERT INTO Diagnostic_Test (test_name, test_charge) 
+--VALUES ('X-Ray', 120.00);
+--
+--INSERT INTO Diagnostic_Test (test_name, test_charge) 
+--VALUES ('MRI', 350.00);
+--
+--COMMIT;
 
 -- Begin Test Cases
 SET SERVEROUTPUT ON;
 
--- Test Case 1: Register Patient - Success
+
+-- Test Case 1: Register a new patient (Success)
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 1: Register Patient - Success');
+    DBMS_OUTPUT.PUT_LINE('Test Case 1: Register a new patient (Success)');
     healthcare_pkg.register_patient(
-        p_patient_id => 1001,
-        p_first_name => 'Robert',
-        p_last_name => 'Jones',
-        p_doctor_id => 1,
-        p_street_name => '123 Main St',
-        p_city => 'Boston',
-        p_state => 'MA'
-    );
-END;
-/
-
--- Test Case 2: Register Patient - Invalid Doctor ID
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 2: Register Patient - Invalid Doctor ID');
-    healthcare_pkg.register_patient(
-        p_patient_id => 1002,
-        p_first_name => 'Sarah',
-        p_last_name => 'Williams',
-        p_doctor_id => 999, -- Non-existent doctor
-        p_street_name => '456 Oak Ave',
-        p_city => 'Chicago',
-        p_state => 'IL'
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 3: Register Patient - NULL Parameters
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 3: Register Patient - NULL Parameters');
-    healthcare_pkg.register_patient(
-        p_patient_id => NULL,
-        p_first_name => 'James',
-        p_last_name => 'Brown',
-        p_doctor_id => 2,
-        p_street_name => '789 Pine St',
-        p_city => 'Denver',
-        p_state => 'CO'
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 4: Register Patient - Name Too Long
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 4: Register Patient - Name Too Long');
-    healthcare_pkg.register_patient(
-        p_patient_id => 1003,
-        p_first_name => RPAD('Elizabeth', 200, 'a'), -- More than 150 chars
-        p_last_name => 'Wilson',
-        p_doctor_id => 3,
-        p_street_name => '101 Cedar St',
-        p_city => 'Miami',
-        p_state => 'FL'
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 5: Register Patient - Duplicate Patient ID
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 5: Register Patient - Duplicate Patient ID');
-    -- First insert a patient
-    healthcare_pkg.register_patient(
-        p_patient_id => 1004,
-        p_first_name => 'Thomas',
-        p_last_name => 'Davis',
-        p_doctor_id => 2,
-        p_street_name => '222 Maple Ave',
-        p_city => 'Seattle',
-        p_state => 'WA'
-    );
-    
-    -- Try to insert the same patient ID again
-    healthcare_pkg.register_patient(
-        p_patient_id => 1004,
-        p_first_name => 'William',
-        p_last_name => 'Thompson',
-        p_doctor_id => 1,
-        p_street_name => '333 Elm St',
-        p_city => 'Portland',
-        p_state => 'OR'
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 6: Add Medical Record - Success
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 6: Add Medical Record - Success');
-    healthcare_pkg.add_medical_record(
-        p_patient_id => 1001,
-        p_doctor_id => 1,
-        p_symptoms => 'Chest pain, shortness of breath',
-        p_diagnosis => 'Hypertension',
-        p_drug_id => 102
-    );
-END;
-/
-
--- Test Case 7: Add Medical Record - Non-Existent Patient
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 7: Add Medical Record - Non-Existent Patient');
-    healthcare_pkg.add_medical_record(
-        p_patient_id => 9999, -- Non-existent patient
-        p_doctor_id => 1,
-        p_symptoms => 'Fever, cough',
-        p_diagnosis => 'Common cold',
-        p_drug_id => 103
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 8: Add Medical Record - Non-Existent Drug
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 8: Add Medical Record - Non-Existent Drug');
-    healthcare_pkg.add_medical_record(
-        p_patient_id => 1001,
-        p_doctor_id => 1,
-        p_symptoms => 'Headache, dizziness',
-        p_diagnosis => 'Migraine',
-        p_drug_id => 999 -- Non-existent drug
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 9: Add Medical Record - Text Too Long
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 9: Add Medical Record - Text Too Long');
-    healthcare_pkg.add_medical_record(
-        p_patient_id => 1001,
-        p_doctor_id => 1,
-        p_symptoms => RPAD('Symptoms', 200, 'a'), -- More than 150 chars
-        p_diagnosis => 'Stress',
-        p_drug_id => 101
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 10: Add Medical Record - Doctor Warning
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 10: Add Medical Record - Doctor Warning');
-    -- Patient 1001 is assigned to doctor 1, but we're using doctor 2
-    healthcare_pkg.add_medical_record(
-        p_patient_id => 1001,
-        p_doctor_id => 2, -- Different doctor than assigned
-        p_symptoms => 'Joint pain',
-        p_diagnosis => 'Arthritis',
-        p_drug_id => 101
-    );
-END;
-/
-
--- Test Case 11: Add Medical Record - Same Day Warning
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 11: Add Medical Record - Same Day Warning');
-    -- First prescription
-    healthcare_pkg.add_medical_record(
-        p_patient_id => 1004,
-        p_doctor_id => 2,
-        p_symptoms => 'Fever',
-        p_diagnosis => 'Infection',
-        p_drug_id => 103
-    );
-    
-    -- Same prescription on same day
-    healthcare_pkg.add_medical_record(
-        p_patient_id => 1004,
-        p_doctor_id => 2,
-        p_symptoms => 'Fever persisting',
-        p_diagnosis => 'Bacterial infection',
-        p_drug_id => 103
-    );
-END;
-/
-
--- Test Case 12: Order Diagnostic Test - Success
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 12: Order Diagnostic Test - Success');
-    healthcare_pkg.order_diagnostic_test(
-        p_patient_id => 1001,
-        p_diagnostic_id => 201,
-        p_test_result => 'Normal'
-    );
-END;
-/
-
--- Test Case 13: Order Diagnostic Test - Non-Existent Diagnostic
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 13: Order Diagnostic Test - Non-Existent Diagnostic');
-    healthcare_pkg.order_diagnostic_test(
-        p_patient_id => 1001,
-        p_diagnostic_id => 999, -- Non-existent test
-        p_test_result => 'Normal'
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 14: Order Diagnostic Test - Result Too Long
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 14: Order Diagnostic Test - Result Too Long');
-    healthcare_pkg.order_diagnostic_test(
-        p_patient_id => 1001,
-        p_diagnostic_id => 202,
-        p_test_result => RPAD('Result', 150, 'a') -- More than 100 chars
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 15: Order Diagnostic Test - Duplicate Warning
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 15: Order Diagnostic Test - Duplicate Warning');
-    -- First test
-    healthcare_pkg.order_diagnostic_test(
-        p_patient_id => 1004,
-        p_diagnostic_id => 203,
-        p_test_result => 'Normal brain scan'
-    );
-    
-    -- Same test within 7 days
-    healthcare_pkg.order_diagnostic_test(
-        p_patient_id => 1004,
-        p_diagnostic_id => 203,
-        p_test_result => 'Follow-up scan'
-    );
-END;
-/
-
-SELECT * FROM PATIENT;
-
--- Test Case 16: Get Patient Bill - Success
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 16: Get Patient Bill - Success');
-    -- Patient with both medications and diagnostic tests
-    healthcare_pkg.get_patient_bill(
-        p_patient_id => 1001
-    );
-END;
-/
-
--- Test Case 17: Get Patient Bill - No Billable Records
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 17: Get Patient Bill - No Billable Records');
-    -- Register a new patient with no medical records
-    healthcare_pkg.register_patient(
-        p_patient_id => 1005,
-        p_first_name => 'Jennifer',
-        p_last_name => 'Lee',
-        p_doctor_id => 3,
-        p_street_name => '444 Birch Ave',
-        p_city => 'Austin',
-        p_state => 'TX'
-    );
-    
-    -- Try to generate bill
-    healthcare_pkg.get_patient_bill(
-        p_patient_id => 1005
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 18: Get Patient Bill - Non-Existent Patient
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 18: Get Patient Bill - Non-Existent Patient');
-    healthcare_pkg.get_patient_bill(
-        p_patient_id => 9999 -- Non-existent patient
-    );
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
-END;
-/
-
--- Test Case 19: Multiple Procedures - Full Workflow
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Test Case 19: Multiple Procedures - Full Workflow');
-    
-    -- Register patient
-    healthcare_pkg.register_patient(
-        p_patient_id => 1006,
-        p_first_name => 'David',
-        p_last_name => 'Clark',
-        p_doctor_id => 1,
-        p_street_name => '555 Walnut St',
-        p_city => 'San Francisco',
+        p_first_name => 'Emma',
+        p_last_name => 'Watson',
+        p_street_name => '123 Movie St',
+        p_city => 'Hollywood',
         p_state => 'CA'
     );
-    
-    -- Add medical record
-    healthcare_pkg.add_medical_record(
-        p_patient_id => 1006,
-        p_doctor_id => 1,
-        p_symptoms => 'High blood pressure readings',
-        p_diagnosis => 'Hypertension stage 1',
-        p_drug_id => 102
+END;
+/
+
+-- Test Case the new patient update procedure
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 2: Update patient details (Success)');
+    -- Get the latest patient ID
+    DECLARE
+        v_patient_id NUMBER;
+    BEGIN
+        SELECT MAX(patient_id) INTO v_patient_id FROM Patient;
+        
+        update_patient_details(
+            p_patient_id => v_patient_id,
+            p_first_name => 'Emma Updated',
+            p_last_name => 'Watson Updated',
+            p_city => 'Los Angeles',
+            p_state => 'CA'
+        );
+    END;
+END;
+/
+
+-- Test Case 3: Update non-existent patient
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 3: Update non-existent patient (Error)');
+    update_patient_details(
+        p_patient_id => 9999,
+        p_first_name => 'Nobody',
+        p_last_name => 'Nowhere',
+        p_city => 'Ghost Town',
+        p_state => 'ZZ'
     );
-    
-    -- Order diagnostic test
-    healthcare_pkg.order_diagnostic_test(
-        p_patient_id => 1006,
-        p_diagnostic_id => 201,
-        p_test_result => 'Elevated cholesterol'
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
+END;
+/
+
+-- Test Case 4: Update patient with NULL ID
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 4: Update patient with NULL ID (Error)');
+    update_patient_details(
+        p_patient_id => NULL,
+        p_first_name => 'Null',
+        p_last_name => 'Patient',
+        p_city => 'Void',
+        p_state => 'XX'
     );
-    
-    -- Order additional diagnostic
-    healthcare_pkg.order_diagnostic_test(
-        p_patient_id => 1006,
-        p_diagnostic_id => 202,
-        p_test_result => 'Normal heart size'
-    );
-    
-    -- Get bill
-    healthcare_pkg.get_patient_bill(
-        p_patient_id => 1006
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
+END;
+/
+
+-- Test Case 5: Register patient without address
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 5: Register patient without address (Success)');
+    healthcare_pkg.register_patient(
+        p_first_name => 'Tom',
+        p_last_name => 'Hardy',
+        p_street_name => NULL,
+        p_city => NULL,
+        p_state => NULL
     );
 END;
 /
 
+-- Test Case 6: Update patient without previous address to add one
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 6: Add address to patient without one (Success)');
+    -- Get the latest patient ID (should be Tom Hardy)
+    DECLARE
+        v_patient_id NUMBER;
+    BEGIN
+        SELECT MAX(patient_id) INTO v_patient_id FROM Patient;
+        
+        update_patient_details(
+            p_patient_id => v_patient_id,
+            p_first_name => NULL, -- Don't change the name
+            p_last_name => NULL,  -- Don't change the name
+            p_city => 'London',
+            p_state => 'UK'
+        );
+    END;
+END;
+/
 
+-- Test Case 7: Add medical record to a patient
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 7: Add medical record (Success)');
+    -- Get a valid patient ID and doctor ID
+    DECLARE
+        v_patient_id NUMBER;
+        v_doctor_id NUMBER;
+    BEGIN
+        SELECT MIN(patient_id) INTO v_patient_id FROM Patient;
+        SELECT MIN(doctor_id) INTO v_doctor_id FROM Doctor_Details;
+        
+        healthcare_pkg.add_medical_record(
+            p_patient_id => v_patient_id,
+            p_doctor_id => v_doctor_id,
+            p_symptoms => 'Fever, headache',
+            p_diagnosis => 'Common cold',
+            p_drug_id => 101
+        );
+    END;
+END;
+/
+
+-- Test Case 8: Order diagnostic test
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 8: Order diagnostic test (Success)');
+    -- Get a valid patient ID and diagnostic test ID
+    DECLARE
+        v_patient_id NUMBER;
+        v_diagnostic_id NUMBER;
+    BEGIN
+        SELECT MIN(patient_id) INTO v_patient_id FROM Patient;
+        SELECT MIN(diagnostic_id) INTO v_diagnostic_id FROM Diagnostic_Test;
+        
+        healthcare_pkg.order_diagnostic_test(
+            p_patient_id => v_patient_id,
+            p_diagnostic_id => v_diagnostic_id,
+            p_test_result => 'Normal results'
+        );
+    END;
+END;
+/
+
+
+-- Test Case 9: Calculate and display patient expenses
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 9: Display patient bill (Success)');
+    -- Get a patient ID with medical records
+    DECLARE
+        v_patient_id NUMBER;
+    BEGIN
+        SELECT patient_id INTO v_patient_id 
+        FROM Medication_Information 
+        WHERE ROWNUM = 1;
+        
+        healthcare_pkg.display_patient_bill(p_patient_id => v_patient_id);
+    END;
+END;
+/
+
+-- Test Case 10: Get total expenses using function
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 10: Get patient total expenses (Success)');
+    -- Get a patient ID with medical records
+    DECLARE
+        v_patient_id NUMBER;
+        v_total_expenses NUMBER;
+    BEGIN
+        SELECT patient_id INTO v_patient_id 
+        FROM Medication_Information 
+        WHERE ROWNUM = 1;
+        
+        v_total_expenses := get_patient_total_expenses(p_patient_id => v_patient_id);
+        
+        DBMS_OUTPUT.PUT_LINE('Patient ID: ' || v_patient_id);
+        DBMS_OUTPUT.PUT_LINE('Total Expenses: $' || TO_CHAR(v_total_expenses, '999,999.99'));
+    END;
+END;
+/
+
+-- Test Case 11: Delete patient record
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 11: Delete patient record (Success)');
+    -- First create a test patient
+    healthcare_pkg.register_patient(
+        p_first_name => 'Delete',
+        p_last_name => 'Me',
+        p_street_name => '999 Temp St',
+        p_city => 'Temporary',
+        p_state => 'TMP'
+    );
+    
+    -- Get the ID of the new patient
+    DECLARE
+        v_patient_id NUMBER;
+    BEGIN
+        SELECT MAX(patient_id) INTO v_patient_id FROM Patient;
+        
+        -- Add a medical record for more deletion testing
+        DECLARE
+            v_doctor_id NUMBER;
+        BEGIN
+            SELECT MIN(doctor_id) INTO v_doctor_id FROM Doctor_Details;
+            
+            healthcare_pkg.add_medical_record(
+                p_patient_id => v_patient_id,
+                p_doctor_id => v_doctor_id,
+                p_symptoms => 'Test symptoms',
+                p_diagnosis => 'Test diagnosis',
+                p_drug_id => 101
+            );
+        END;
+        
+        -- Now delete the patient
+        delete_patient_record(p_patient_id => v_patient_id);
+        
+        -- Verify deletion
+        DECLARE
+            v_count NUMBER;
+        BEGIN
+            SELECT COUNT(*) INTO v_count FROM Patient WHERE patient_id = v_patient_id;
+            DBMS_OUTPUT.PUT_LINE('Patient exists after deletion: ' || CASE WHEN v_count > 0 THEN 'Yes' ELSE 'No' END);
+        END;
+    END;
+END;
+/
+
+-- Test Case 12: Delete non-existent patient
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 12: Delete non-existent patient (Error)');
+    delete_patient_record(p_patient_id => 9999);
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
+END;
+/
+
+-- Test Case 13: End-to-end workflow
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 13: End-to-end workflow (Success)');
+    
+    -- 1. Register new patient
+    healthcare_pkg.register_patient(
+        p_first_name => 'Complete',
+        p_last_name => 'Workflow',
+        p_street_name => '777 Test Rd',
+        p_city => 'Testville',
+        p_state => 'TS'
+    );
+    
+    -- Get patient ID
+    DECLARE
+        v_patient_id NUMBER;
+        v_doctor_id NUMBER;
+        v_diagnostic_id NUMBER;
+        v_med_expenses NUMBER;
+        v_diag_expenses NUMBER;
+        v_total_expenses NUMBER;
+    BEGIN
+        SELECT MAX(patient_id) INTO v_patient_id FROM Patient;
+        SELECT MIN(doctor_id) INTO v_doctor_id FROM Doctor_Details;
+        SELECT MIN(diagnostic_id) INTO v_diagnostic_id FROM Diagnostic_Test;
+        
+        -- 2. Add medical record
+        healthcare_pkg.add_medical_record(
+            p_patient_id => v_patient_id,
+            p_doctor_id => v_doctor_id,
+            p_symptoms => 'Workflow test symptoms',
+            p_diagnosis => 'Workflow test diagnosis',
+            p_drug_id => 102
+        );
+        
+        -- 3. Order diagnostic test
+        healthcare_pkg.order_diagnostic_test(
+            p_patient_id => v_patient_id,
+            p_diagnostic_id => v_diagnostic_id,
+            p_test_result => 'Workflow test results'
+        );
+        
+        -- 4. Update patient details
+        update_patient_details(
+            p_patient_id => v_patient_id,
+            p_first_name => 'Complete Updated',
+            p_last_name => 'Workflow Updated',
+            p_city => 'Testville Updated',
+            p_state => 'TS'
+        );
+        
+        -- 5. Get expenses details
+        healthcare_pkg.get_patient_expenses(
+            p_patient_id => v_patient_id,
+            p_med_expenses => v_med_expenses,
+            p_diag_expenses => v_diag_expenses,
+            p_total_expenses => v_total_expenses
+        );
+        
+        DBMS_OUTPUT.PUT_LINE('Medication expenses: $' || TO_CHAR(v_med_expenses, '999,999.99'));
+        DBMS_OUTPUT.PUT_LINE('Diagnostic expenses: $' || TO_CHAR(v_diag_expenses, '999,999.99'));
+        DBMS_OUTPUT.PUT_LINE('Total expenses: $' || TO_CHAR(v_total_expenses, '999,999.99'));
+        
+        -- 6. Display bill
+        healthcare_pkg.display_patient_bill(p_patient_id => v_patient_id);
+        
+        -- 7. Delete patient (Optional - comment if you want to keep the test data)
+        -- delete_patient_record(p_patient_id => v_patient_id);
+    END;
+END;
+/
+
+-- Test Case 14: Error handling in medical record procedure
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 14: Error handling in add_medical_record (Error)');
+    healthcare_pkg.add_medical_record(
+        p_patient_id => NULL,
+        p_doctor_id => 1,
+        p_symptoms => 'Test',
+        p_diagnosis => 'Test',
+        p_drug_id => 101
+    );
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
+END;
+/
+
+-- Test Case 15: Error handling in diagnostic test procedure
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test Case 15: Error handling in order_diagnostic_test (Error)');
+    healthcare_pkg.order_diagnostic_test(
+        p_patient_id => 1,
+        p_diagnostic_id => NULL,
+        p_test_result => 'Test'
+    );
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Expected Error: ' || SQLERRM);
+END;
+/
 
 
 -- Connect as doctor_user

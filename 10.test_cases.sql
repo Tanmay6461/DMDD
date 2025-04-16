@@ -371,6 +371,126 @@ BEGIN
 END;
 /
 
+
+
+
+-- Connect as doctor_user
+
+SELECT * FROM OMS.Doctor_Details WHERE ROWNUM <= 5;
+SELECT * FROM OMS.Patient WHERE ROWNUM <= 5;
+SELECT * FROM OMS.Drug_Details WHERE ROWNUM <= 5;
+ 
+
+INSERT INTO OMS.Patient (first_name, last_name) 
+VALUES ('Doctor', 'Test');
+ROLLBACK;
+ 
+-- Test insert into restricted tables (should fail)
+INSERT INTO OMS.Doctor_Details (first_name, last_name, specialization) 
+VALUES ('Fail', 'Test', 'Unauthorized');
+
+ 
+-- Test delete operation (should fail as doctors don't have DELETE privilege)
+DELETE FROM OMS.Patient WHERE patient_id = 1;
+
+ 
+-- Test package procedure execution (should succeed)
+BEGIN
+    healthcare_pkg.add_medical_record(
+        p_patient_id => 1,
+        p_doctor_id => 1,
+        p_symptoms => 'Test symptoms',
+        p_diagnosis => 'Test diagnosis',
+        p_drug_id => 1
+    );
+END;
+/
+ROLLBACK;
+
+
+
+-- Connect as admin_user
+
+
+SELECT * FROM OMS.Doctor_Details WHERE ROWNUM <= 5;
+SELECT * FROM OMS.Patient WHERE ROWNUM <= 5;
+SELECT * FROM OMS.Medical_History WHERE ROWNUM <= 5;
+SELECT * FROM OMS.Drug_Details WHERE ROWNUM <= 5;
+ 
+
+INSERT INTO OMS.Doctor_Details (first_name, last_name, specialization) 
+VALUES ('Admin', 'Test', 'Administration');
+-- Then rollback to clean up
+ROLLBACK;
+ 
+-- Test package procedure execution 
+BEGIN
+    healthcare_pkg.display_patient_bill(1);
+END;
+/
+ 
+-- Test view access 
+SELECT * FROM OMS.Patient_Medical_Summary WHERE ROWNUM <= 5;
+SELECT * FROM OMS.Doctor_Performance WHERE ROWNUM <= 5;
+SELECT * FROM OMS.Drug_Utilization WHERE ROWNUM <= 5;
+
+
+-- Connect as billing_user
+
+
+SELECT * FROM OMS.Patient WHERE ROWNUM <= 5;
+SELECT * FROM OMS.Drug_Details WHERE ROWNUM <= 5;
+SELECT * FROM OMS.Prescribed_Diagnostics WHERE ROWNUM <= 5;
+ 
+
+INSERT INTO Patient (first_name, last_name) 
+VALUES ('Billing', 'Test');
+
+ 
+UPDATE OMS.Drug_Details SET drug_price = drug_price * 1.1 WHERE drug_id = 1;
+
+BEGIN
+    get_patient_bill(1);
+END;
+/
+ 
+
+BEGIN
+    healthcare_pkg.register_patient(
+        p_first_name => 'Billing',
+        p_last_name => 'Test',
+        p_street_name => 'Test St',
+        p_city => 'TestCity',
+        p_state => 'TS'
+    );
+END;
+/
+
+
+
+-- Connect as patient_user
+
+ 
+
+SELECT * FROM OMS.Patient_Medical_Summary;
+SELECT * FROM OMS.Patient_Billing_Summary;
+ 
+
+SELECT * FROM OMS.Patient;
+
+ 
+SELECT * FROM OMS.Medical_History;
+
+ 
+
+BEGIN
+    healthcare_pkg.display_patient_bill(1);
+END;
+/
+
+
+
+
 -- Clean up test data (optional)
 /*
 BEGIN

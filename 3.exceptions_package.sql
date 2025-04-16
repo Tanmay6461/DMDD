@@ -7,5 +7,6 @@ create or replace PACKAGE healthcare_exceptions AS
     diagnostic_not_found_code CONSTANT NUMBER := -20004;
     patient_exists_code CONSTANT NUMBER := -20005;
     null_parameter_code CONSTANT NUMBER := -20006;
+    future_data_code CONSTANT NUMBER := -20007;
 
 END healthcare_exceptions;

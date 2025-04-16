@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
+Add CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
     -- Register patient implementation with enhanced validations
     PROCEDURE register_patient(
         p_patient_id IN INTEGER,

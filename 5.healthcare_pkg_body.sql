@@ -1,22 +1,16 @@
 CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
     -- Register patient implementation with enhanced validations
     PROCEDURE register_patient(
-        p_patient_id IN INTEGER,
         p_first_name IN VARCHAR2,
         p_last_name IN VARCHAR2,
-        p_doctor_id IN INTEGER,
         p_street_name IN VARCHAR2,
         p_city IN VARCHAR2,
         p_state IN VARCHAR2
     ) AS
-        v_doctor_exists NUMBER;
-        v_patient_exists NUMBER;
+        v_patient_id NUMBER;
+        v_address_id NUMBER;
     BEGIN
-        -- Validate all parameters are not null
-        IF p_patient_id IS NULL THEN
-            RAISE_APPLICATION_ERROR(healthcare_exceptions.null_parameter_code, 'Patient ID cannot be NULL');
-        END IF;
-        
+        -- Validate parameters are not null
         IF p_first_name IS NULL THEN
             RAISE_APPLICATION_ERROR(healthcare_exceptions.null_parameter_code, 'First name cannot be NULL');
         END IF;
@@ -25,20 +19,7 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
             RAISE_APPLICATION_ERROR(healthcare_exceptions.null_parameter_code, 'Last name cannot be NULL');
         END IF;
         
-        IF p_doctor_id IS NULL THEN
-            RAISE_APPLICATION_ERROR(healthcare_exceptions.null_parameter_code, 'Doctor ID cannot be NULL');
-        END IF;
-        
-        -- Validate ID formats
-        IF p_patient_id <= 0 THEN
-            RAISE_APPLICATION_ERROR(-20010, 'Patient ID must be a positive number');
-        END IF;
-        
-        IF p_doctor_id <= 0 THEN
-            RAISE_APPLICATION_ERROR(-20011, 'Doctor ID must be a positive number');
-        END IF;
-        
-        -- Validate name lengths (based on your table constraints)
+        -- Validate name lengths (based on table constraints)
         IF LENGTH(p_first_name) < 1 OR LENGTH(p_first_name) > 150 THEN
             RAISE_APPLICATION_ERROR(-20012, 'First name must be between 1 and 150 characters');
         END IF;
@@ -60,46 +41,29 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
             RAISE_APPLICATION_ERROR(-20016, 'State cannot exceed 20 characters');
         END IF;
         
-        -- Check if doctor exists
-        SELECT COUNT(*) INTO v_doctor_exists
-        FROM Doctor_Details
-        WHERE doctor_id = p_doctor_id;
-        
-        IF v_doctor_exists = 0 THEN
-            RAISE_APPLICATION_ERROR(healthcare_exceptions.doctor_not_found_code, 
-                'Doctor ID ' || p_doctor_id || ' not found');
-        END IF;
-        
-        -- Check if patient already exists
-        SELECT COUNT(*) INTO v_patient_exists
-        FROM Patient
-        WHERE patient_id = p_patient_id;
-        
-        IF v_patient_exists > 0 THEN
-            RAISE_APPLICATION_ERROR(healthcare_exceptions.patient_exists_code, 
-                'Patient ID ' || p_patient_id || ' already exists');
-        END IF;
-        
-        -- Insert patient details
-        INSERT INTO Patient (patient_id, first_name, last_name, doctor_id)
-        VALUES (p_patient_id, TRIM(p_first_name), TRIM(p_last_name), p_doctor_id);
-        
-        -- Insert patient address if provided
+        -- Create address if provided
         IF p_street_name IS NOT NULL OR p_city IS NOT NULL OR p_state IS NOT NULL THEN
-            INSERT INTO Patient_Address (address_id, street_name, city, state, patient_id)
-            VALUES ((SELECT NVL(MAX(address_id), 0) + 1 FROM Patient_Address), 
-                    TRIM(p_street_name), TRIM(p_city), UPPER(TRIM(p_state)), p_patient_id);
+            SELECT NVL(MAX(address_id), 0) + 1 INTO v_address_id FROM Patient_Address;
+            
+            -- Insert patient address
+            INSERT INTO Patient_Address (address_id, street_name, city, state)
+            VALUES (v_address_id, TRIM(p_street_name), TRIM(p_city), UPPER(TRIM(p_state)));
         END IF;
+        
+        -- Insert patient details (with address_id if available)
+        INSERT INTO Patient (first_name, last_name, address_id)
+        VALUES (TRIM(p_first_name), TRIM(p_last_name), v_address_id)
+        RETURNING patient_id INTO v_patient_id;
         
         COMMIT;
-        DBMS_OUTPUT.PUT_LINE('Patient registered successfully');
+        DBMS_OUTPUT.PUT_LINE('Patient registered successfully with ID: ' || v_patient_id);
     EXCEPTION
         WHEN OTHERS THEN
             ROLLBACK;
             DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
     END register_patient;
     
-    --2 Add medical record implementation with enhanced validations
+    -- Add medical record implementation with enhanced validations
     PROCEDURE add_medical_record(
         p_patient_id IN INTEGER,
         p_doctor_id IN INTEGER,
@@ -110,9 +74,6 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
         v_patient_exists NUMBER;
         v_doctor_exists NUMBER;
         v_drug_exists NUMBER;
-        v_history_id INTEGER;
-        v_prescription_id INTEGER;
-        v_doctor_match NUMBER;
     BEGIN
         -- Individual null parameter checks
         IF p_patient_id IS NULL THEN
@@ -173,15 +134,19 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
                 'Doctor ID ' || p_doctor_id || ' not found');
         END IF;
         
-        -- Check if doctor is patient's assigned doctor
-        SELECT COUNT(*) INTO v_doctor_match
-        FROM Patient
-        WHERE patient_id = p_patient_id
-        AND doctor_id = p_doctor_id;
-        
-        IF v_doctor_match = 0 THEN
-            DBMS_OUTPUT.PUT_LINE('Warning: Doctor ID ' || p_doctor_id || ' is not the assigned doctor for this patient');
-        END IF;
+        -- Check if doctor has treated this patient before
+        DECLARE
+            v_previous_treatments NUMBER;
+        BEGIN
+            SELECT COUNT(*) INTO v_previous_treatments
+            FROM Medication_Information
+            WHERE patient_id = p_patient_id
+            AND doctor_id = p_doctor_id;
+            
+            IF v_previous_treatments = 0 THEN
+                DBMS_OUTPUT.PUT_LINE('Note: This is the first time Doctor ID ' || p_doctor_id || ' is treating this patient');
+            END IF;
+        END;
         
         -- Check if drug exists
         SELECT COUNT(*) INTO v_drug_exists
@@ -208,21 +173,13 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
             END IF;
         END;
         
-        -- Add to medical history
-        SELECT NVL(MAX(patient_history_id), 0) + 1 INTO v_history_id FROM Medical_History;
+        -- Add to medical history (using IDENTITY column)
+        INSERT INTO Medical_History (symptoms, diagnosis, date_detected, patient_id)
+        VALUES (TRIM(p_symptoms), TRIM(p_diagnosis), SYSDATE, p_patient_id);
         
-        INSERT INTO Medical_History (patient_history_id, symptoms, diagnosis, date_detected, patient_id)
-        VALUES (v_history_id, 
-                TRIM(p_symptoms), 
-                TRIM(p_diagnosis), 
-                SYSDATE, 
-                p_patient_id);
-        
-        -- Add prescription
-        SELECT NVL(MAX(prescription_id), 0) + 1 INTO v_prescription_id FROM Medication_Information;
-        
-        INSERT INTO Medication_Information (prescription_id, date_administered, patient_id, doctor_id, drug_id)
-        VALUES (v_prescription_id, SYSDATE, p_patient_id, p_doctor_id, p_drug_id);
+        -- Add prescription (using IDENTITY column)
+        INSERT INTO Medication_Information (date_administered, patient_id, doctor_id, drug_id)
+        VALUES (SYSDATE, p_patient_id, p_doctor_id, p_drug_id);
         
         COMMIT;
         DBMS_OUTPUT.PUT_LINE('Medical record added successfully');
@@ -232,7 +189,7 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
             DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
     END add_medical_record;
     
-    --3 Order diagnostic test implementation with enhanced validations
+    -- Order diagnostic test implementation with enhanced validations
     PROCEDURE order_diagnostic_test(
         p_patient_id IN INTEGER,
         p_diagnostic_id IN INTEGER,
@@ -240,7 +197,6 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
     ) AS
         v_patient_exists NUMBER;
         v_diagnostic_exists NUMBER;
-        v_prescribed_diagnostics_id INTEGER;
         v_test_charge NUMBER;
     BEGIN
         -- Individual null parameter checks
@@ -313,18 +269,12 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
             END IF;
         END;
         
-        -- Get new prescribed diagnostics ID
-        SELECT NVL(MAX(prescribed_diagnostics_id), 0) + 1 INTO v_prescribed_diagnostics_id 
-        FROM Prescribed_Diagnostics;
-        
-        -- Insert prescribed diagnostic
+        -- Insert prescribed diagnostic (using IDENTITY column)
         INSERT INTO Prescribed_Diagnostics (
-            prescribed_diagnostics_id, date_administered, test_result, 
-            patient_id, diagnostic_test_id
+            date_administered, test_result, patient_id, diagnostic_test_id
         )
         VALUES (
-            v_prescribed_diagnostics_id, SYSDATE, TRIM(p_test_result), 
-            p_patient_id, p_diagnostic_id
+            SYSDATE, TRIM(p_test_result), p_patient_id, p_diagnostic_id
         );
         
         COMMIT;
@@ -335,11 +285,101 @@ CREATE OR REPLACE PACKAGE BODY healthcare_pkg AS
             DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
     END order_diagnostic_test;
     
+    -- Get patient expenses procedure
+    PROCEDURE get_patient_expenses(
+        p_patient_id IN INTEGER,
+        p_med_expenses OUT NUMBER,
+        p_diag_expenses OUT NUMBER,
+        p_total_expenses OUT NUMBER
+    ) 
+    IS
+    BEGIN
+        -- Calculate medication expenses
+        SELECT NVL(SUM(dd.drug_price), 0)
+        INTO p_med_expenses
+        FROM Medication_Information mi
+        JOIN Drug_Details dd ON mi.drug_id = dd.drug_id
+        WHERE mi.patient_id = p_patient_id;
+        
+        -- Calculate diagnostic test expenses
+        SELECT NVL(SUM(dt.test_charge), 0)
+        INTO p_diag_expenses
+        FROM Prescribed_Diagnostics pd
+        JOIN Diagnostic_Test dt ON pd.diagnostic_test_id = dt.diagnostic_id
+        WHERE pd.patient_id = p_patient_id;
+        
+        -- Total expenses
+        p_total_expenses := p_med_expenses + p_diag_expenses;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            p_med_expenses := 0;
+            p_diag_expenses := 0;
+            p_total_expenses := 0;
+        WHEN OTHERS THEN
+            p_med_expenses := -1;
+            p_diag_expenses := -1;
+            p_total_expenses := -1;
+            DBMS_OUTPUT.PUT_LINE('Error calculating expenses: ' || SQLERRM);
+    END get_patient_expenses;
+    
+    -- Display bill procedure
+    PROCEDURE display_patient_bill(p_patient_id IN INTEGER)
+    IS
+        v_patient_name VARCHAR2(300);
+        v_doctor_name VARCHAR2(100);
+        v_medication_cost NUMBER;
+        v_diagnostic_cost NUMBER;
+        v_total_amount NUMBER;
+        v_patient_exists NUMBER;
+    BEGIN
+        -- Check if patient exists
+        SELECT COUNT(*) INTO v_patient_exists
+        FROM Patient
+        WHERE patient_id = p_patient_id;
+        
+        IF v_patient_exists = 0 THEN
+            RAISE_APPLICATION_ERROR(healthcare_exceptions.patient_not_found_code, 
+                'Patient ID ' || p_patient_id || ' not found');
+        END IF;
+        
+        -- Get patient name
+        SELECT first_name || ' ' || last_name
+        INTO v_patient_name
+        FROM Patient
+        WHERE patient_id = p_patient_id;
+        
+        -- Get most recent doctor name
+        BEGIN
+            SELECT MAX(dd.first_name || ' ' || dd.last_name)
+            INTO v_doctor_name
+            FROM Medication_Information mi
+            JOIN Doctor_Details dd ON mi.doctor_id = dd.doctor_id
+            WHERE mi.patient_id = p_patient_id;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                v_doctor_name := 'No doctor assigned';
+        END;
+        
+        -- Get all expenses using the procedure
+        get_patient_expenses(p_patient_id, v_medication_cost, v_diagnostic_cost, v_total_amount);
+        
+        -- Display bill information
+        DBMS_OUTPUT.PUT_LINE('--- HEALTHCARE BILL ---');
+        DBMS_OUTPUT.PUT_LINE('Patient: ' || v_patient_name);
+        DBMS_OUTPUT.PUT_LINE('Doctor: ' || v_doctor_name);
+        DBMS_OUTPUT.PUT_LINE('Bill Date: ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY'));
+        DBMS_OUTPUT.PUT_LINE('------------------------');
+        DBMS_OUTPUT.PUT_LINE('Medication Cost: $' || TO_CHAR(v_medication_cost, '999,999.99'));
+        DBMS_OUTPUT.PUT_LINE('Diagnostic Cost: $' || TO_CHAR(v_diagnostic_cost, '999,999.99'));
+        DBMS_OUTPUT.PUT_LINE('------------------------');
+        DBMS_OUTPUT.PUT_LINE('Total Amount: $' || TO_CHAR(v_total_amount, '999,999.99'));
+        DBMS_OUTPUT.PUT_LINE('------------------------');
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('Error: Patient ID ' || p_patient_id || ' not found.');
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+    END display_patient_bill;
+    
 END healthcare_pkg;
 /
-
-
-
-
-
-

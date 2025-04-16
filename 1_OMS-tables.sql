@@ -169,19 +169,19 @@
         
         -- Insert into Medical_History (with dates in the past)
         INSERT INTO Medical_History (symptoms, diagnosis, date_detected, patient_id) 
-        VALUES ('Chest pain, shortness of breath', 'Hypertension', TO_DATE('2024-01-15', 'YYYY-MM-DD'), 1);
+        VALUES ('Chest pain, shortness of breath', 'Hypertension', TO_DATE('2025-01-15', 'YYYY-MM-DD'), 1);
         
         INSERT INTO Medical_History (symptoms, diagnosis, date_detected, patient_id) 
-        VALUES ('Severe headache, nausea', 'Migraine', TO_DATE('2024-02-10', 'YYYY-MM-DD'), 2);
+        VALUES ('Severe headache, nausea', 'Migraine', TO_DATE('2025-02-10', 'YYYY-MM-DD'), 2);
         
         INSERT INTO Medical_History (symptoms, diagnosis, date_detected, patient_id) 
-        VALUES ('Joint pain, swelling', 'Arthritis', TO_DATE('2024-03-05', 'YYYY-MM-DD'), 3);
+        VALUES ('Joint pain, swelling', 'Arthritis', TO_DATE('2025-03-05', 'YYYY-MM-DD'), 3);
         
         INSERT INTO Medical_History (symptoms, diagnosis, date_detected, patient_id) 
-        VALUES ('Itchy rash, redness', 'Eczema', TO_DATE('2024-03-20', 'YYYY-MM-DD'), 4);
+        VALUES ('Itchy rash, redness', 'Eczema', TO_DATE('2025-03-20', 'YYYY-MM-DD'), 4);
         
         --INSERT INTO Medical_History (symptoms, diagnosis, date_detected, patient_id) 
-        --VALUES ('Fever, sore throat', 'Strep throat', TO_DATE('2024-04-01', 'YYYY-MM-DD'), 5);
+        --VALUES ('Fever, sore throat', 'Strep throat', TO_DATE('2025-04-01', 'YYYY-MM-DD'), 5);
         
         -- Insert into Diagnostic_Test
         INSERT INTO Diagnostic_Test (test_name, test_charge) 
@@ -201,34 +201,34 @@
         
         -- Insert into Medication_Information
         INSERT INTO Medication_Information (date_administered, patient_id, doctor_id, drug_id) 
-        VALUES (TO_DATE('2024-01-16', 'YYYY-MM-DD'), 1, 1, 1);
+        VALUES (TO_DATE('2025-01-16', 'YYYY-MM-DD'), 1, 1, 1);
         
         INSERT INTO Medication_Information (date_administered, patient_id, doctor_id, drug_id) 
-        VALUES (TO_DATE('2024-02-11', 'YYYY-MM-DD'), 2, 2, 2);
+        VALUES (TO_DATE('2025-02-11', 'YYYY-MM-DD'), 2, 2, 2);
         
         INSERT INTO Medication_Information (date_administered, patient_id, doctor_id, drug_id) 
-        VALUES (TO_DATE('2024-03-06', 'YYYY-MM-DD'), 3, 3, 3);
+        VALUES (TO_DATE('2025-03-06', 'YYYY-MM-DD'), 3, 3, 3);
         
         INSERT INTO Medication_Information (date_administered, patient_id, doctor_id, drug_id) 
-        VALUES (TO_DATE('2024-03-21', 'YYYY-MM-DD'), 4, 4, 5);
+        VALUES (TO_DATE('2025-03-21', 'YYYY-MM-DD'), 4, 4, 5);
         
         INSERT INTO Medication_Information (date_administered, patient_id, doctor_id, drug_id) 
-        VALUES (TO_DATE('2024-04-02', 'YYYY-MM-DD'), 5, 5, 4);
+        VALUES (TO_DATE('2025-04-02', 'YYYY-MM-DD'), 5, 5, 4);
         
         -- Insert into Prescribed_Diagnostics
         INSERT INTO Prescribed_Diagnostics (date_administered, test_result, patient_id, diagnostic_test_id) 
-        VALUES (TO_DATE('2024-01-17', 'YYYY-MM-DD'), 'Elevated white blood cell count', 1, 1);
+        VALUES (TO_DATE('2025-01-17', 'YYYY-MM-DD'), 'Elevated white blood cell count', 1, 1);
         
         INSERT INTO Prescribed_Diagnostics (date_administered, test_result, patient_id, diagnostic_test_id) 
-        VALUES (TO_DATE('2024-02-12', 'YYYY-MM-DD'), 'No abnormalities detected', 2, 2);
+        VALUES (TO_DATE('2025-02-12', 'YYYY-MM-DD'), 'No abnormalities detected', 2, 2);
         
         INSERT INTO Prescribed_Diagnostics (date_administered, test_result, patient_id, diagnostic_test_id) 
-        VALUES (TO_DATE('2024-03-07', 'YYYY-MM-DD'), 'Mild joint inflammation', 3, 3);
+        VALUES (TO_DATE('2025-03-07', 'YYYY-MM-DD'), 'Mild joint inflammation', 3, 3);
         
         INSERT INTO Prescribed_Diagnostics (date_administered, test_result, patient_id, diagnostic_test_id) 
-        VALUES (TO_DATE('2024-03-22', 'YYYY-MM-DD'), 'Eczema confirmed', 4, 4);
+        VALUES (TO_DATE('2025-03-22', 'YYYY-MM-DD'), 'Eczema confirmed', 4, 4);
         
         INSERT INTO Prescribed_Diagnostics (date_administered, test_result, patient_id, diagnostic_test_id) 
-        VALUES (TO_DATE('2024-04-03', 'YYYY-MM-DD'), 'Positive for strep bacteria', 5, 5);
+        VALUES (TO_DATE('2025-04-03', 'YYYY-MM-DD'), 'Positive for strep bacteria', 5, 5);
         
         COMMIT;

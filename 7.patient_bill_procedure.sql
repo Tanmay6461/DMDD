@@ -215,4 +215,121 @@ EXCEPTION
         ROLLBACK;
         DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END delete_patient_record;
+/ 
+
+
+
+
+CREATE OR REPLACE PROCEDURE register_doctor(
+    p_first_name IN VARCHAR2,
+    p_last_name IN VARCHAR2,
+    p_specialization IN VARCHAR2 DEFAULT NULL
+)
+IS
+    v_doctor_id INTEGER;
+BEGIN
+    -- Input validation
+    IF p_first_name IS NULL OR LENGTH(TRIM(p_first_name)) = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'First name cannot be empty');
+    END IF;
+    
+    IF p_last_name IS NULL OR LENGTH(TRIM(p_last_name)) = 0 THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Last name cannot be empty');
+    END IF;
+    
+    -- Insert the new doctor record
+    INSERT INTO Doctor_Details (first_name, last_name, specialization)
+    VALUES (p_first_name, p_last_name, p_specialization)
+    RETURNING doctor_id INTO v_doctor_id;
+    
+    COMMIT;
+    
+    DBMS_OUTPUT.PUT_LINE('Doctor registered successfully with ID: ' || v_doctor_id);
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Error registering doctor: ' || SQLERRM);
+        RAISE;
+END register_doctor;
+/
+
+
+CREATE OR REPLACE PROCEDURE update_doctor(
+    p_doctor_id IN INTEGER,
+    p_first_name IN VARCHAR2 DEFAULT NULL,
+    p_last_name IN VARCHAR2 DEFAULT NULL,
+    p_specialization IN VARCHAR2 DEFAULT NULL
+)
+IS
+    v_doctor_exists NUMBER;
+BEGIN
+    -- Check if doctor exists
+    SELECT COUNT(*)
+    INTO v_doctor_exists
+    FROM Doctor_Details
+    WHERE doctor_id = p_doctor_id;
+    
+    IF v_doctor_exists = 0 THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Doctor with ID ' || p_doctor_id || ' does not exist');
+    END IF;
+    
+    -- Update only the provided fields
+    UPDATE Doctor_Details
+    SET first_name = CASE WHEN p_first_name IS NOT NULL THEN p_first_name ELSE first_name END,
+        last_name = CASE WHEN p_last_name IS NOT NULL THEN p_last_name ELSE last_name END,
+        specialization = CASE WHEN p_specialization IS NOT NULL THEN p_specialization ELSE specialization END
+    WHERE doctor_id = p_doctor_id;
+    
+    COMMIT;
+    
+    DBMS_OUTPUT.PUT_LINE('Doctor with ID ' || p_doctor_id || ' updated successfully');
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Error updating doctor: ' || SQLERRM);
+        RAISE;
+END update_doctor;
+/
+
+-- Procedure to delete a doctor (with dependency check)
+CREATE OR REPLACE PROCEDURE delete_doctor(
+    p_doctor_id IN INTEGER
+)
+IS
+    v_doctor_exists NUMBER;
+    v_dependencies NUMBER;
+BEGIN
+    -- Check if doctor exists
+    SELECT COUNT(*)
+    INTO v_doctor_exists
+    FROM Doctor_Details
+    WHERE doctor_id = p_doctor_id;
+    
+    IF v_doctor_exists = 0 THEN
+        RAISE_APPLICATION_ERROR(-20004, 'Doctor with ID ' || p_doctor_id || ' does not exist');
+    END IF;
+    
+    -- Check for dependencies in Medication_Information
+    SELECT COUNT(*)
+    INTO v_dependencies
+    FROM Medication_Information
+    WHERE doctor_id = p_doctor_id;
+    
+    IF v_dependencies > 0 THEN
+        RAISE_APPLICATION_ERROR(-20005, 'Cannot delete doctor with ID ' || p_doctor_id || ' because there are ' || v_dependencies || ' medication records associated with this doctor');
+    END IF;
+    
+    -- Proceed with deletion if no dependencies exist
+    DELETE FROM Doctor_Details
+    WHERE doctor_id = p_doctor_id;
+    
+    COMMIT;
+    
+    DBMS_OUTPUT.PUT_LINE('Doctor with ID ' || p_doctor_id || ' deleted successfully');
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('Error deleting doctor: ' || SQLERRM);
+        RAISE;
+END delete_doctor;
 /
